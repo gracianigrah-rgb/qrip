@@ -10,33 +10,107 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CodeRouteImport } from './routes/code'
+import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
+import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
+import { Route as AuthenticatedClasserRouteImport } from './routes/_authenticated/classer'
+import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodeRoute = CodeRouteImport.update({
+  id: '/code',
+  path: '/code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccueilRoute = AuthenticatedAccueilRouteImport.update({
+  id: '/accueil',
+  path: '/accueil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
+  id: '/capture',
+  path: '/capture',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedClasserRoute = AuthenticatedClasserRouteImport.update({
+  id: '/classer',
+  path: '/classer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
+  id: '/rapport',
+  path: '/rapport',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/code': typeof CodeRoute
+  '/accueil': typeof AuthenticatedAccueilRoute
+  '/capture': typeof AuthenticatedCaptureRoute
+  '/classer': typeof AuthenticatedClasserRoute
+  '/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/code': typeof CodeRoute
+  '/accueil': typeof AuthenticatedAccueilRoute
+  '/capture': typeof AuthenticatedCaptureRoute
+  '/classer': typeof AuthenticatedClasserRoute
+  '/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/code': typeof CodeRoute
+  '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
+  '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/classer': typeof AuthenticatedClasserRoute
+  '/_authenticated/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/auth' | '/code' | '/accueil' | '/capture' | '/classer' | '/rapport'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/auth' | '/code' | '/accueil' | '/capture' | '/classer' | '/rapport'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/code'
+    | '/_authenticated/accueil'
+    | '/_authenticated/capture'
+    | '/_authenticated/classer'
+    | '/_authenticated/rapport'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CodeRoute: typeof CodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +122,80 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/code': {
+      id: '/code'
+      path: '/code'
+      fullPath: '/code'
+      preLoaderRoute: typeof CodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/accueil': {
+      id: '/_authenticated/accueil'
+      path: '/accueil'
+      fullPath: '/accueil'
+      preLoaderRoute: typeof AuthenticatedAccueilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/capture': {
+      id: '/_authenticated/capture'
+      path: '/capture'
+      fullPath: '/capture'
+      preLoaderRoute: typeof AuthenticatedCaptureRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/classer': {
+      id: '/_authenticated/classer'
+      path: '/classer'
+      fullPath: '/classer'
+      preLoaderRoute: typeof AuthenticatedClasserRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rapport': {
+      id: '/_authenticated/rapport'
+      path: '/rapport'
+      fullPath: '/rapport'
+      preLoaderRoute: typeof AuthenticatedRapportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
+  AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedClasserRoute: typeof AuthenticatedClasserRoute
+  AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccueilRoute: AuthenticatedAccueilRoute,
+  AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedClasserRoute: AuthenticatedClasserRoute,
+  AuthenticatedRapportRoute: AuthenticatedRapportRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CodeRoute: CodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
