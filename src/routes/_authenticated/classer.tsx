@@ -19,6 +19,8 @@ export const Route = createFileRoute("/_authenticated/classer")({
       { name: "description", content: "L'IA propose, vous décidez : classez la facture en achat ou en vente." },
       { property: "og:title", content: "Achat ou vente ? — qrip" },
       { property: "og:description", content: "L'IA propose, vous décidez : classez la facture en achat ou en vente." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Classer,

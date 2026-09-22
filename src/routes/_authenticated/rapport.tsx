@@ -19,6 +19,8 @@ export const Route = createFileRoute("/_authenticated/rapport")({
         property: "og:description",
         content: "Chiffre d'affaires, dépenses et résultat à partager avec une banque ou une microfinance.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Rapport,

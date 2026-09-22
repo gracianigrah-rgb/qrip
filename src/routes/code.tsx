@@ -18,6 +18,8 @@ export const Route = createFileRoute("/code")({
       { name: "description", content: "Saisissez votre code secret qrip sur le clavier de l'application." },
       { property: "og:title", content: "Votre code à 4 chiffres — qrip" },
       { property: "og:description", content: "Saisissez votre code secret qrip sur le clavier de l'application." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CodePage,

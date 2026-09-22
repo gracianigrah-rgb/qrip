@@ -18,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/capture")({
       { name: "description", content: "Prenez une photo de votre facture ou importez-la depuis votre galerie." },
       { property: "og:title", content: "Photographier une facture — qrip" },
       { property: "og:description", content: "Prenez une photo de votre facture ou importez-la depuis votre galerie." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Capture,

@@ -14,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/accueil")({
       { name: "description", content: "Solde, ventes, achats et dernières factures de votre activité." },
       { property: "og:title", content: "Ma trésorerie — qrip" },
       { property: "og:description", content: "Solde, ventes, achats et dernières factures de votre activité." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Accueil,

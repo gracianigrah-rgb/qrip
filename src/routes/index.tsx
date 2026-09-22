@@ -18,6 +18,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Photographiez une facture, choisissez Achat ou Vente, suivez votre activité.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Splash,

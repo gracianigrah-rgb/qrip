@@ -12,6 +12,8 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Créez votre compte qrip avec votre numéro de téléphone." },
       { property: "og:title", content: "Entrer avec mon numéro — qrip" },
       { property: "og:description", content: "Créez votre compte qrip avec votre numéro de téléphone." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,
