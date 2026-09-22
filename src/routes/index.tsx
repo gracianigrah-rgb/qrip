@@ -1,24 +1,51 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Logo } from "@/components/qrip/Screen";
+import { useSession } from "@/lib/qrip";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "qrip — vos factures deviennent votre trésorerie" },
+      {
+        name: "description",
+        content:
+          "qrip transforme vos photos de factures en trésorerie claire : achats, ventes, résultat et rapport à partager avec votre banque.",
+      },
+      { property: "og:title", content: "qrip — vos factures deviennent votre trésorerie" },
+      {
+        property: "og:description",
+        content: "Photographiez une facture, choisissez Achat ou Vente, suivez votre activité.",
+      },
+    ],
+  }),
+  component: Splash,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Splash() {
+  const navigate = useNavigate();
+  const { session, loading } = useSession();
+
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => {
+      navigate({ to: session ? "/accueil" : "/auth", replace: true });
+    }, 1400);
+    return () => clearTimeout(timer);
+  }, [loading, session, navigate]);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-gradient-sun px-6">
+      <div className="animate-pop-in flex flex-col items-center gap-6">
+        <div className="animate-float">
+          <Logo size={128} />
+        </div>
+        <h1 className="text-6xl font-extrabold tracking-tight text-sun-foreground">qrip</h1>
+        <p className="text-center text-base font-semibold text-sun-foreground/80">
+          Vos factures, votre trésorerie.
+        </p>
+      </div>
     </div>
   );
 }
