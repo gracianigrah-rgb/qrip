@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/classer")({
       { property: "og:description", content: "L'IA propose, vous décidez : classez la facture en achat ou en vente." },
     ],
   }),
-  component: Classer;
+  component: Classer,
 });
 
 function todayISO() {
