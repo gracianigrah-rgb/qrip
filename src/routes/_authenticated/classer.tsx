@@ -63,9 +63,15 @@ function Classer() {
   }, []);
 
   async function save() {
-    if (!kind) return toast.error("Choisissez Achat ou Vente.");
+    if (!kind) {
+      toast.error("Choisissez Achat ou Vente.");
+      return;
+    }
     const value = Number(amount.replace(/[^\d.,]/g, "").replace(",", "."));
-    if (!Number.isFinite(value) || value <= 0) return toast.error("Indiquez le montant de la facture.");
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error("Indiquez le montant de la facture.");
+      return;
+    }
 
     setSaving(true);
     try {
