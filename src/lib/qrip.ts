@@ -68,7 +68,7 @@ export const LEVELS = [
 ];
 
 export function levelFor(count: number) {
-  let current = LEVELS[0];
+  let current = LEVELS[0]!;
   let next: (typeof LEVELS)[number] | null = null;
   for (const level of LEVELS) {
     if (count >= level.min) current = level;
