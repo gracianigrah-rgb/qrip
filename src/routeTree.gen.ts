@@ -15,6 +15,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CodeRouteImport } from './routes/code'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
+import { Route as AuthenticatedClasserRouteImport } from './routes/_authenticated/classer'
+import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +47,16 @@ const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   path: '/capture',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedClasserRoute = AuthenticatedClasserRouteImport.update({
+  id: '/classer',
+  path: '/classer',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
+  id: '/rapport',
+  path: '/rapport',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +64,8 @@ export interface FileRoutesByFullPath {
   '/code': typeof CodeRoute
   '/accueil': typeof AuthenticatedAccueilRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/classer': typeof AuthenticatedClasserRoute
+  '/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +73,8 @@ export interface FileRoutesByTo {
   '/code': typeof CodeRoute
   '/accueil': typeof AuthenticatedAccueilRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/classer': typeof AuthenticatedClasserRoute
+  '/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +84,16 @@ export interface FileRoutesById {
   '/code': typeof CodeRoute
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/classer': typeof AuthenticatedClasserRoute
+  '/_authenticated/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/code' | '/accueil' | '/capture'
+  fullPaths:
+    '/' | '/auth' | '/code' | '/accueil' | '/capture' | '/classer' | '/rapport'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/code' | '/accueil' | '/capture'
+  to:
+    '/' | '/auth' | '/code' | '/accueil' | '/capture' | '/classer' | '/rapport'
   id:
     | '__root__'
     | '/'
@@ -82,6 +102,8 @@ export interface FileRouteTypes {
     | '/code'
     | '/_authenticated/accueil'
     | '/_authenticated/capture'
+    | '/_authenticated/classer'
+    | '/_authenticated/rapport'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,17 +157,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaptureRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/classer': {
+      id: '/_authenticated/classer'
+      path: '/classer'
+      fullPath: '/classer'
+      preLoaderRoute: typeof AuthenticatedClasserRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rapport': {
+      id: '/_authenticated/rapport'
+      path: '/rapport'
+      fullPath: '/rapport'
+      preLoaderRoute: typeof AuthenticatedRapportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedClasserRoute: typeof AuthenticatedClasserRoute
+  AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccueilRoute: AuthenticatedAccueilRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedClasserRoute: AuthenticatedClasserRoute,
+  AuthenticatedRapportRoute: AuthenticatedRapportRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
