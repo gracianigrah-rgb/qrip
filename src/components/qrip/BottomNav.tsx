@@ -23,7 +23,6 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
-              search={to === "/capture" ? { kind: undefined } : undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "press flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-extrabold text-muted-foreground active:press-active",
