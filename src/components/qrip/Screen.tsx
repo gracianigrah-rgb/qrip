@@ -37,9 +37,9 @@ export function Screen({
           </div>
         </header>
       )}
-      <main className={cn("flex-1 px-5 pb-6 pt-2", className)}>{children}</main>
+      <main className={cn("flex-1 px-5 pb-24 pt-2", className)}>{children}</main>
       {footer && (
-        <footer className="px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2">{footer}</footer>
+        <footer className="px-5 pb-24 pt-2">{footer}</footer>
       )}
     </div>
   );

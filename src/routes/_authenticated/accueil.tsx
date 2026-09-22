@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, BarChart3, Camera, LogOut } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Screen } from "@/components/qrip/Screen";
-import { formatMoney, levelFor } from "@/lib/qrip";
+import { formatMoney } from "@/lib/qrip";
 
 export const Route = createFileRoute("/_authenticated/accueil")({
   ssr: false,
@@ -13,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/accueil")({
       { name: "description", content: "Solde, ventes, achats et dernières factures de votre activité." },
       { property: "og:title", content: "Ma trésorerie — qrip" },
       { property: "og:description", content: "Solde, ventes, achats et dernières factures de votre activité." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Accueil,
@@ -39,33 +42,44 @@ function Accueil() {
   const ventes = invoices.filter((i) => i.kind === "vente").reduce((s, i) => s + Number(i.amount), 0);
   const achats = invoices.filter((i) => i.kind === "achat").reduce((s, i) => s + Number(i.amount), 0);
   const solde = ventes - achats;
-  const level = levelFor(invoices.length);
+  const now = new Date();
+  const chartData = Array.from({ length: 6 }, (_, index) => {
+    const month = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+    const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
+    const rows = invoices.filter((invoice) => invoice.invoice_date.startsWith(key));
+    return {
+      month: month.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""),
+      ventes: rows.filter((invoice) => invoice.kind === "vente").reduce((sum, invoice) => sum + Number(invoice.amount), 0),
+      achats: rows.filter((invoice) => invoice.kind === "achat").reduce((sum, invoice) => sum + Number(invoice.amount), 0),
+    };
+  });
 
   return (
     <Screen
       className="space-y-5"
-      footer={
+    >
+      <header className="pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <h1 className="text-4xl font-extrabold">qrip</h1>
+      </header>
+
+      <div className="grid grid-cols-2 gap-4">
         <Link
           to="/capture"
-          className="press flex w-full items-center justify-center gap-3 rounded-3xl bg-gradient-flame px-6 py-5 text-lg font-extrabold text-primary-foreground card-pop active:press-active"
+          search={{ kind: "achat" }}
+          className="press flex h-36 flex-col items-center justify-center gap-2 rounded-4xl bg-gradient-flame text-primary-foreground card-pop active:press-active"
         >
-          <Camera className="size-6" /> Nouvelle facture
+          <ArrowDownLeft className="size-10" />
+          <span className="text-2xl font-extrabold uppercase">Achat</span>
         </Link>
-      }
-    >
-      <header className="flex items-center justify-between pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <div>
-          <p className="text-sm font-bold text-muted-foreground">Ma trésorerie</p>
-          <h1 className="text-3xl font-extrabold">qrip</h1>
-        </div>
-        <button
-          aria-label="Se déconnecter"
-          onClick={() => supabase.auth.signOut()}
-          className="press flex size-11 items-center justify-center rounded-2xl bg-card text-muted-foreground soft-shadow active:press-active"
+        <Link
+          to="/capture"
+          search={{ kind: "vente" }}
+          className="press flex h-36 flex-col items-center justify-center gap-2 rounded-4xl bg-gradient-teal text-teal-foreground card-pop active:press-active"
         >
-          <LogOut className="size-5" />
-        </button>
-      </header>
+          <ArrowUpRight className="size-10" />
+          <span className="text-2xl font-extrabold uppercase">Vente</span>
+        </Link>
+      </div>
 
       <section className="rounded-4xl bg-gradient-teal p-6 card-pop">
         <p className="text-sm font-bold text-teal-foreground/80">Solde de l'activité</p>
@@ -88,35 +102,30 @@ function Accueil() {
         </div>
       </section>
 
-      <section className="rounded-3xl bg-gradient-sun p-5 card-pop">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-extrabold text-sun-foreground">
-            {level.current.emoji} Niveau {level.current.name}
-          </p>
-          <p className="text-sm font-bold text-sun-foreground/80">{invoices.length} factures</p>
+      <section className="rounded-3xl bg-card p-5 soft-shadow">
+        <div className="mb-4 flex items-end justify-between">
+          <div>
+            <h2 className="text-lg font-extrabold">Activité sur 6 mois</h2>
+            <p className="text-xs font-bold text-muted-foreground">Ventes et achats</p>
+          </div>
+          <div className="flex gap-3 text-xs font-bold text-muted-foreground">
+            <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-teal" />Ventes</span>
+            <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-primary" />Achats</span>
+          </div>
         </div>
-        <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-card/70">
-          <div
-            className="h-full rounded-full bg-gradient-flame transition-all duration-500"
-            style={{ width: `${level.progress}%` }}
-          />
+        <div className="h-52 w-full" aria-label="Graphique des ventes et achats des six derniers mois">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} barGap={3}>
+              <CartesianGrid vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} fontSize={11} />
+              <YAxis hide />
+              <Tooltip formatter={(value) => formatMoney(Number(value))} cursor={{ fill: "var(--muted)" }} />
+              <Bar dataKey="ventes" fill="var(--teal-deep)" radius={[5, 5, 0, 0]} />
+              <Bar dataKey="achats" fill="var(--primary)" radius={[5, 5, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-        <p className="mt-2 text-sm font-semibold text-sun-foreground/80">
-          {level.next
-            ? `Encore ${level.remaining} facture(s) pour devenir ${level.next.name} ${level.next.emoji}`
-            : "Niveau maximum atteint, bravo !"}
-        </p>
       </section>
-
-      <Link
-        to="/rapport"
-        className="press flex items-center justify-between rounded-3xl bg-card px-5 py-4 soft-shadow active:press-active"
-      >
-        <span className="flex items-center gap-3 font-extrabold">
-          <BarChart3 className="size-5 text-primary" /> Mon rapport pour la banque
-        </span>
-        <span className="text-muted-foreground">›</span>
-      </Link>
 
       <section className="space-y-3">
         <h2 className="text-lg font-extrabold">Dernières factures</h2>

@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Logo } from "@/components/qrip/Screen";
+import { BottomNav } from "@/components/qrip/BottomNav";
 import { useSession } from "@/lib/qrip";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -26,5 +27,10 @@ function AuthenticatedLayout() {
     );
   }
 
-  return <Outlet />;
+  return (
+    <div className="mx-auto min-h-[100dvh] max-w-lg bg-background pb-20">
+      <Outlet />
+      <BottomNav />
+    </div>
+  );
 }

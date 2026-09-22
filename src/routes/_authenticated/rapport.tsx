@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Share2 } from "lucide-react";
+import { Download, FileSpreadsheet, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
 import { useInvoices } from "@/routes/_authenticated/accueil";
@@ -19,6 +19,8 @@ export const Route = createFileRoute("/_authenticated/rapport")({
         property: "og:description",
         content: "Chiffre d'affaires, dépenses et résultat à partager avec une banque ou une microfinance.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Rapport,
@@ -62,6 +64,53 @@ function Rapport() {
     }
   }
 
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportCsv() {
+    const rows = [
+      ["Date", "Type", "Commerce ou client", "Montant", "Devise"],
+      ...invoices.map((invoice) => [
+        invoice.invoice_date,
+        invoice.kind === "vente" ? "Vente" : "Achat",
+        invoice.merchant ?? "",
+        String(Number(invoice.amount)),
+        "XOF",
+      ]),
+    ];
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(";")).join("\n");
+    downloadBlob(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }), "rapport-qrip.csv");
+    toast.success("Export CSV téléchargé.");
+  }
+
+  async function exportPdf() {
+    const { jsPDF } = await import("jspdf");
+    const pdf = new jsPDF();
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(24);
+    pdf.text("qrip", 20, 24);
+    pdf.setFontSize(16);
+    pdf.text("Rapport d'activite", 20, 36);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.text(`Genere le ${new Date().toLocaleDateString("fr-FR")}`, 20, 45);
+    lignes.forEach((ligne, index) => {
+      const y = 62 + index * 12;
+      pdf.setFont("helvetica", "normal");
+      pdf.text(ligne.label, 20, y);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(ligne.value.replace("€", "EUR"), 190, y, { align: "right" });
+    });
+    pdf.save("rapport-qrip.pdf");
+    toast.success("Rapport PDF téléchargé.");
+  }
+
   return (
     <Screen
       back="/accueil"
@@ -91,6 +140,18 @@ function Rapport() {
             <span className="font-extrabold">{l.value}</span>
           </div>
         ))}
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-extrabold">Exporter mes données</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <BigButton tone="ghost" onClick={exportCsv} className="px-3 py-4 text-base">
+            <span className="flex items-center justify-center gap-2"><FileSpreadsheet className="size-5" /> CSV</span>
+          </BigButton>
+          <BigButton tone="ghost" onClick={exportPdf} className="px-3 py-4 text-base">
+            <span className="flex items-center justify-center gap-2"><Download className="size-5" /> PDF</span>
+          </BigButton>
+        </div>
       </section>
 
       <p className="rounded-3xl bg-gradient-sun p-5 text-sm font-semibold text-sun-foreground">
