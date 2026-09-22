@@ -2,12 +2,16 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Camera, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { BigButton, Screen } from "@/components/qrip/Screen";
 
 export const PENDING_KEY = "qrip:pending-invoice";
+export const PENDING_KIND_KEY = "qrip:pending-kind";
+const captureSearchSchema = z.object({ kind: z.enum(["achat", "vente"]).optional() });
 
 export const Route = createFileRoute("/_authenticated/capture")({
   ssr: false,
+  validateSearch: captureSearchSchema,
   head: () => ({
     meta: [
       { title: "Photographier une facture — qrip" },
@@ -33,6 +37,7 @@ async function toResizedDataUrl(file: File, max = 1400): Promise<string> {
 
 function Capture() {
   const navigate = useNavigate();
+  const { kind } = Route.useSearch();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -43,6 +48,8 @@ function Capture() {
     try {
       const dataUrl = await toResizedDataUrl(file);
       sessionStorage.setItem(PENDING_KEY, dataUrl);
+      if (kind) sessionStorage.setItem(PENDING_KIND_KEY, kind);
+      else sessionStorage.removeItem(PENDING_KIND_KEY);
       navigate({ to: "/classer" });
     } catch {
       toast.error("Cette image n'a pas pu être lue.");
@@ -54,6 +61,11 @@ function Capture() {
   return (
     <Screen back="/accueil" title="Nouvelle facture" className="flex flex-col justify-center gap-6">
       <div className="mx-auto w-full max-w-sm space-y-5">
+        {kind && (
+          <p className="text-center text-sm font-extrabold uppercase text-primary">
+            Nouvelle {kind === "achat" ? "dépense" : "vente"}
+          </p>
+        )}
         <div className="rounded-4xl bg-card p-8 text-center card-pop">
           <div className="animate-float mx-auto mb-4 flex size-24 items-center justify-center rounded-3xl bg-gradient-sun">
             <Camera className="size-12 text-sun-foreground" />

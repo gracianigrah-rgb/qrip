@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
-import { PENDING_KEY } from "@/routes/_authenticated/capture";
+import { PENDING_KEY, PENDING_KIND_KEY } from "@/routes/_authenticated/capture";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeInvoice, type InvoiceSuggestion } from "@/lib/invoice-ai.functions";
 import type { Kind } from "@/lib/qrip";
@@ -49,10 +49,12 @@ function Classer() {
       return;
     }
     setImage(stored);
+    const presetKind = sessionStorage.getItem(PENDING_KIND_KEY);
+    if (presetKind === "achat" || presetKind === "vente") setKind(presetKind);
     analyze({ data: { imageDataUrl: stored } })
       .then((result) => {
         setSuggestion(result);
-        if (result.kind) setKind(result.kind);
+        if (!presetKind && result.kind) setKind(result.kind);
         if (result.amount) setAmount(String(result.amount));
         if (result.merchant) setMerchant(result.merchant);
         if (result.invoice_date) setDate(result.invoice_date);
@@ -102,6 +104,7 @@ function Classer() {
       if (error) throw error;
 
       sessionStorage.removeItem(PENDING_KEY);
+      sessionStorage.removeItem(PENDING_KIND_KEY);
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
       toast.success(kind === "vente" ? "Vente enregistrée 🎉" : "Achat enregistré ✅");
       navigate({ to: "/accueil", replace: true });
