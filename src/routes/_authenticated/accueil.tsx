@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Building2, ChevronRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Screen } from "@/components/qrip/Screen";
 import { formatMoney } from "@/lib/qrip";
+import { isProfileComplete, useProfile } from "@/lib/profile";
+
 
 export const Route = createFileRoute("/_authenticated/accueil")({
   ssr: false,
