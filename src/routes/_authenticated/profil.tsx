@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2, LogOut, Phone, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { isProfileComplete, useProfile } from "@/lib/profile";
+
+const CURRENCIES = ["XOF", "EUR", "USD"];
 
 export const Route = createFileRoute("/_authenticated/profil")({
   ssr: false,
@@ -26,45 +29,42 @@ function Profil() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [businessName, setBusinessName] = useState("");
+  const [currency, setCurrency] = useState("XOF");
   const [saving, setSaving] = useState(false);
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData.user) throw userError ?? new Error("Session introuvable");
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("business_name, phone, currency")
-        .eq("id", userData.user.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: profile, isLoading } = useProfile();
+  const incomplete = !isLoading && !isProfileComplete(profile);
 
   useEffect(() => {
     if (profile?.business_name) setBusinessName(profile.business_name);
-  }, [profile?.business_name]);
+    if (profile?.currency) setCurrency(profile.currency);
+  }, [profile?.business_name, profile?.currency]);
 
   async function saveProfile() {
+    const name = businessName.trim();
+    if (name.length < 2) {
+      toast.error("Entrez le nom de votre entreprise.");
+      return;
+    }
     setSaving(true);
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) throw userError ?? new Error("Session introuvable");
       const { error } = await supabase
         .from("profiles")
-        .update({ business_name: businessName.trim() || null })
+        .update({ business_name: name, currency })
         .eq("id", userData.user.id);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Profil entreprise enregistré.");
+      if (incomplete) navigate({ to: "/accueil" });
     } catch {
       toast.error("Le profil n’a pas pu être enregistré.");
     } finally {
       setSaving(false);
     }
   }
+
 
   async function signOut() {
     await supabase.auth.signOut();
