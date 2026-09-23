@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Home, Plus } from "lucide-react";
+import { BarChart3, Building2, Home, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { to: "/accueil" as const, label: "Accueil", icon: Home },
   { to: "/capture" as const, label: "Ajouter", icon: Plus },
   { to: "/rapport" as const, label: "Rapport", icon: BarChart3 },
+  { to: "/profil" as const, label: "Profil", icon: Building2 },
 ];
 
 export function BottomNav() {
@@ -16,7 +17,7 @@ export function BottomNav() {
       aria-label="Navigation principale"
       className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg border-t border-border bg-card/95 px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl"
     >
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-4">
         {tabs.map(({ to, label, icon: Icon }) => {
           const active = pathname === to || (to === "/capture" && pathname === "/classer");
           return (

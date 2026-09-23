@@ -29,7 +29,12 @@ function AuthenticatedLayout() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-lg bg-background pb-20">
-      <Outlet />
+      <header className="fixed inset-x-0 top-0 z-50 mx-auto flex h-[calc(3.75rem+env(safe-area-inset-top))] max-w-lg items-end border-b border-border bg-card/95 px-5 pb-3 backdrop-blur-xl">
+        <span className="font-display text-3xl font-extrabold text-foreground">qrip</span>
+      </header>
+      <div className="pt-[calc(3.75rem+env(safe-area-inset-top))]">
+        <Outlet />
+      </div>
       <BottomNav />
     </div>
   );

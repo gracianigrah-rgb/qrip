@@ -16,6 +16,7 @@ import { Route as CodeRouteImport } from './routes/code'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
 import { Route as AuthenticatedClasserRouteImport } from './routes/_authenticated/classer'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
 
 const IndexRoute = IndexRouteImport.update({
@@ -52,6 +53,11 @@ const AuthenticatedClasserRoute = AuthenticatedClasserRouteImport.update({
   path: '/classer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
   id: '/rapport',
   path: '/rapport',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/accueil': typeof AuthenticatedAccueilRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/classer': typeof AuthenticatedClasserRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/accueil': typeof AuthenticatedAccueilRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/classer': typeof AuthenticatedClasserRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRoutesById {
@@ -85,15 +93,30 @@ export interface FileRoutesById {
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
   '/_authenticated/classer': typeof AuthenticatedClasserRoute
+  '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/rapport': typeof AuthenticatedRapportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/code' | '/accueil' | '/capture' | '/classer' | '/rapport'
+    | '/'
+    | '/auth'
+    | '/code'
+    | '/accueil'
+    | '/capture'
+    | '/classer'
+    | '/profil'
+    | '/rapport'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/auth' | '/code' | '/accueil' | '/capture' | '/classer' | '/rapport'
+    | '/'
+    | '/auth'
+    | '/code'
+    | '/accueil'
+    | '/capture'
+    | '/classer'
+    | '/profil'
+    | '/rapport'
   id:
     | '__root__'
     | '/'
@@ -103,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accueil'
     | '/_authenticated/capture'
     | '/_authenticated/classer'
+    | '/_authenticated/profil'
     | '/_authenticated/rapport'
   fileRoutesById: FileRoutesById
 }
@@ -164,6 +188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClasserRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/rapport': {
       id: '/_authenticated/rapport'
       path: '/rapport'
@@ -178,6 +209,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
   AuthenticatedClasserRoute: typeof AuthenticatedClasserRoute
+  AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
 }
 
@@ -185,6 +217,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccueilRoute: AuthenticatedAccueilRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
   AuthenticatedClasserRoute: AuthenticatedClasserRoute,
+  AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRapportRoute: AuthenticatedRapportRoute,
 }
 
