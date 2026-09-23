@@ -84,6 +84,13 @@ function Profil() {
         </p>
       </section>
 
+      {incomplete && (
+        <p className="rounded-3xl bg-gradient-sun p-5 text-sm font-bold text-sun-foreground">
+          Donnez un nom à votre entreprise pour démarrer votre trésorerie. Vous pourrez le modifier à tout moment.
+        </p>
+      )}
+
+
       <section className="space-y-4 rounded-3xl bg-card p-5 soft-shadow">
         <label className="block">
           <span className="text-sm font-bold text-muted-foreground">Nom de l’entreprise</span>
@@ -107,13 +114,24 @@ function Profil() {
           </p>
         </div>
 
-        <div>
-          <p className="text-sm font-bold text-muted-foreground">Devise</p>
-          <p className="mt-2 flex items-center gap-3 rounded-2xl bg-muted px-4 py-3 font-bold">
-            <WalletCards className="size-5 text-muted-foreground" />
-            {profile?.currency || "XOF"}
-          </p>
-        </div>
+        <label className="block">
+          <span className="text-sm font-bold text-muted-foreground">Devise</span>
+          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-muted px-4 py-3">
+            <WalletCards className="size-5 shrink-0 text-muted-foreground" />
+            <select
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value)}
+              className="min-w-0 flex-1 bg-transparent font-bold outline-none"
+            >
+              {CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
+          </div>
+        </label>
+
 
         <BigButton tone="teal" disabled={saving || isLoading} onClick={saveProfile}>
           {saving ? "Enregistrement…" : "Enregistrer mon profil"}
