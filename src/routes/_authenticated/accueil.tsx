@@ -58,10 +58,6 @@ function Accueil() {
     <Screen
       className="space-y-5"
     >
-      <header className="pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <h1 className="text-4xl font-extrabold">qrip</h1>
-      </header>
-
       <div className="grid grid-cols-2 gap-4">
         <Link
           to="/capture"
