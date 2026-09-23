@@ -40,6 +40,9 @@ export function useInvoices() {
 
 function Accueil() {
   const { data: invoices = [], isLoading } = useInvoices();
+  const { data: profile } = useProfile();
+  const needsProfile = !isProfileComplete(profile);
+
 
   const ventes = invoices.filter((i) => i.kind === "vente").reduce((s, i) => s + Number(i.amount), 0);
   const achats = invoices.filter((i) => i.kind === "achat").reduce((s, i) => s + Number(i.amount), 0);
@@ -60,7 +63,26 @@ function Accueil() {
     <Screen
       className="space-y-5"
     >
+      {needsProfile && (
+        <Link
+          to="/profil"
+          className="press flex items-center gap-4 rounded-3xl bg-gradient-sun p-5 text-sun-foreground card-pop active:press-active"
+        >
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-card/80">
+            <Building2 className="size-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-extrabold">Complétez votre profil entreprise</p>
+            <p className="text-sm font-semibold text-sun-foreground/80">
+              Donnez un nom à votre activité pour une trésorerie à votre image.
+            </p>
+          </div>
+          <ChevronRight className="size-6 shrink-0" />
+        </Link>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
+
         <Link
           to="/capture"
           search={{ kind: "achat" }}

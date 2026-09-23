@@ -63,7 +63,8 @@ function CodePage() {
       await supabase.from("profiles").upsert({ id: userId, phone: clean }, { onConflict: "id" });
     }
     toast.success("Compte créé, bienvenue sur qrip 🎉");
-    navigate({ to: "/accueil", replace: true });
+    navigate({ to: "/profil", replace: true });
+
   }
 
   async function submit(code: string) {
