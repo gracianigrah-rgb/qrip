@@ -178,7 +178,7 @@ function Rapport() {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Rapport");
     sheet.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
-    sheet.pageMargins = { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
+    sheet.pageSetup.margins = { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
     sheet.columns = [
       { key: "a", width: 28 },
       { key: "b", width: 30 },
@@ -225,7 +225,7 @@ function Rapport() {
       sheet.getCell(summaryRow + index, 2).value = line.value;
     });
     sheet.views = [{ state: "frozen", ySplit: headerRow }];
-    sheet.printArea = `A1:E${summaryRow + lignes.length}`;
+    sheet.pageSetup.printArea = `A1:E${summaryRow + lignes.length}`;
     const buffer = await workbook.xlsx.writeBuffer();
     downloadBlob(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "rapport-qrip.xlsx");
     toast.success("Export Excel téléchargé.");
