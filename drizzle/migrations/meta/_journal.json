@@ -8,6 +8,13 @@
       "when": 1790050293321,
       "tag": "0000_factures_storage_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790217700391,
+      "tag": "0001_add_business_identity_fields",
+      "breakpoints": true
     }
   ]
 }
