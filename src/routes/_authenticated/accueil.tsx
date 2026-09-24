@@ -42,6 +42,7 @@ function Accueil() {
   const { data: invoices = [], isLoading } = useInvoices();
   const { data: profile } = useProfile();
   const needsProfile = !isProfileComplete(profile);
+  const businessName = profile?.business_name?.trim() || "Mon entreprise";
 
 
   const ventes = invoices.filter((i) => i.kind === "vente").reduce((s, i) => s + Number(i.amount), 0);
@@ -102,7 +103,12 @@ function Accueil() {
       </div>
 
       <section className="rounded-4xl bg-gradient-teal p-6 card-pop">
-        <p className="text-sm font-bold text-teal-foreground/80">Solde de l'activité</p>
+        <div className="flex items-start justify-between gap-4">
+          <p className="shrink-0 text-sm font-bold text-teal-foreground/80">Solde de l'activité</p>
+          <p className="min-w-0 max-w-[55%] break-words text-right text-sm font-extrabold leading-tight text-teal-foreground">
+            {businessName}
+          </p>
+        </div>
         <p className="mt-1 text-5xl font-extrabold text-teal-foreground">
           {isLoading ? "…" : formatMoney(solde)}
         </p>

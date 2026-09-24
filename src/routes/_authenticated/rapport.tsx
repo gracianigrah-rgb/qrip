@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
 import { useInvoices } from "@/routes/_authenticated/accueil";
 import { formatMoney } from "@/lib/qrip";
+import { useProfile } from "@/lib/profile";
 
 export const Route = createFileRoute("/_authenticated/rapport")({
   ssr: false,
@@ -28,6 +29,8 @@ export const Route = createFileRoute("/_authenticated/rapport")({
 
 function Rapport() {
   const { data: invoices = [], isLoading } = useInvoices();
+  const { data: profile } = useProfile();
+  const businessName = profile?.business_name?.trim() || "Mon entreprise";
 
   const ventes = invoices.filter((i) => i.kind === "vente");
   const achats = invoices.filter((i) => i.kind === "achat");
@@ -50,11 +53,11 @@ function Rapport() {
 
   async function share() {
     const text = [
-      "Rapport d'activité qrip",
+      `Rapport d'activité — ${businessName}`,
       ...lignes.map((l) => `${l.label} : ${l.value}`),
     ].join("\n");
     try {
-      if (navigator.share) await navigator.share({ title: "Rapport qrip", text });
+      if (navigator.share) await navigator.share({ title: `Rapport — ${businessName}`, text });
       else {
         await navigator.clipboard.writeText(text);
         toast.success("Rapport copié, collez-le où vous voulez.");
@@ -75,6 +78,8 @@ function Rapport() {
 
   function exportCsv() {
     const rows = [
+      ["Entreprise", businessName],
+      [],
       ["Date", "Type", "Commerce ou client", "Montant", "Devise"],
       ...invoices.map((invoice) => [
         invoice.invoice_date,
@@ -97,6 +102,9 @@ function Rapport() {
     pdf.text("qrip", 20, 24);
     pdf.setFontSize(16);
     pdf.text("Rapport d'activite", 20, 36);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(13);
+    pdf.text(businessName, 190, 36, { align: "right", maxWidth: 90 });
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(11);
     pdf.text(`Genere le ${new Date().toLocaleDateString("fr-FR")}`, 20, 45);
@@ -126,7 +134,12 @@ function Rapport() {
       }
     >
       <section className="rounded-4xl bg-gradient-teal p-6 card-pop">
-        <p className="text-sm font-bold text-teal-foreground/80">Résultat net</p>
+        <div className="flex items-start justify-between gap-4">
+          <p className="shrink-0 text-sm font-bold text-teal-foreground/80">Résultat net</p>
+          <p className="min-w-0 max-w-[55%] break-words text-right text-sm font-extrabold leading-tight text-teal-foreground">
+            {businessName}
+          </p>
+        </div>
         <p className="mt-1 text-5xl font-extrabold text-teal-foreground">
           {isLoading ? "…" : formatMoney(resultat)}
         </p>
