@@ -75,7 +75,7 @@ function Accueil() {
           <div className="min-w-0 flex-1">
             <p className="text-base font-extrabold">Complétez votre profil entreprise</p>
             <p className="text-sm font-semibold text-sun-foreground/80">
-              Donnez un nom à votre activité pour une trésorerie à votre image.
+              Ajoutez votre identité et vos coordonnées pour personnaliser vos rapports.
             </p>
           </div>
           <ChevronRight className="size-6 shrink-0" />
