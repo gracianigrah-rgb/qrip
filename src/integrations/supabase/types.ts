@@ -62,23 +62,38 @@ export type Database = {
       profiles: {
         Row: {
           business_name: string | null
+          business_phone: string | null
+          city: string | null
+          country: string | null
           created_at: string
           currency: string
           id: string
+          logo_path: string | null
+          neighborhood: string | null
           phone: string
         }
         Insert: {
           business_name?: string | null
+          business_phone?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           currency?: string
           id: string
+          logo_path?: string | null
+          neighborhood?: string | null
           phone: string
         }
         Update: {
           business_name?: string | null
+          business_phone?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           currency?: string
           id?: string
+          logo_path?: string | null
+          neighborhood?: string | null
           phone?: string
         }
         Relationships: []

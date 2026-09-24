@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import qripLogoAsset from "@/assets/qrip-logo.png.asset.json";
 
 export function Screen({
   title,
@@ -76,12 +77,11 @@ export function BigButton({
 export function Logo({ size = 96 }: { size?: number }) {
   return (
     <img
-      src="/icon-512.png"
-      alt="qrip"
+      src={qripLogoAsset.url}
+      alt="Logo qrip"
       width={size}
-      height={size}
-      className="drop-shadow-xl"
-      style={{ width: size, height: size }}
+      className="h-auto drop-shadow-xl"
+      style={{ width: size }}
     />
   );
 }
