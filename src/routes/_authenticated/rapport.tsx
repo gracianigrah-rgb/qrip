@@ -177,6 +177,8 @@ function Rapport() {
     const { Workbook } = await import("exceljs");
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Rapport");
+    sheet.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
+    sheet.pageMargins = { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
     sheet.columns = [
       { key: "a", width: 28 },
       { key: "b", width: 30 },
@@ -184,14 +186,21 @@ function Rapport() {
       { key: "d", width: 18 },
       { key: "e", width: 14 },
     ];
-    const logoData = await getLogoDataUrl().catch(() => null);
+    const [logoData, brandLogoData] = await Promise.all([
+      getLogoDataUrl().catch(() => null),
+      imageToDataUrl(qripLogoAsset.url).catch(() => null),
+    ]);
+    if (brandLogoData) {
+      const brandImageId = workbook.addImage({ base64: brandLogoData, extension: "png" });
+      sheet.addImage(brandImageId, { tl: { col: 0, row: 0.1 }, ext: { width: 90, height: 54 } });
+    }
     if (logoData) {
       const imageId = workbook.addImage({ base64: logoData, extension: logoData.includes("image/jpeg") ? "jpeg" : "png" });
       sheet.addImage(imageId, { tl: { col: 3.7, row: 0.2 }, ext: { width: 110, height: 80 } });
     }
-    sheet.mergeCells("A1:C1");
-    sheet.getCell("A1").value = "RAPPORT D’ACTIVITÉ";
-    sheet.getCell("A1").font = { name: "Arial", bold: true, size: 18, color: { argb: "FF613300" } };
+    sheet.mergeCells("A2:C2");
+    sheet.getCell("A2").value = "RAPPORT D’ACTIVITÉ";
+    sheet.getCell("A2").font = { name: "Arial", bold: true, size: 18, color: { argb: "FF613300" } };
     identityRows().forEach(([label, value], index) => {
       sheet.getCell(index + 3, 1).value = label;
       sheet.getCell(index + 3, 1).font = { name: "Arial", bold: true };
@@ -216,6 +225,7 @@ function Rapport() {
       sheet.getCell(summaryRow + index, 2).value = line.value;
     });
     sheet.views = [{ state: "frozen", ySplit: headerRow }];
+    sheet.printArea = `A1:E${summaryRow + lignes.length}`;
     const buffer = await workbook.xlsx.writeBuffer();
     downloadBlob(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "rapport-qrip.xlsx");
     toast.success("Export Excel téléchargé.");
