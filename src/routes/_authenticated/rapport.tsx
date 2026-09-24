@@ -97,6 +97,7 @@ function Rapport() {
   async function exportPdf() {
     const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF();
+    const pdfText = (value: string) => value.replace(/[\u00a0\u202f]/g, " ");
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(24);
     pdf.text("qrip", 20, 24);
@@ -104,7 +105,7 @@ function Rapport() {
     pdf.text("Rapport d'activite", 20, 36);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(13);
-    pdf.text(businessName, 190, 36, { align: "right", maxWidth: 90 });
+    pdf.text(pdfText(businessName), 190, 36, { align: "right", maxWidth: 90 });
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(11);
     pdf.text(`Genere le ${new Date().toLocaleDateString("fr-FR")}`, 20, 45);
@@ -113,7 +114,7 @@ function Rapport() {
       pdf.setFont("helvetica", "normal");
       pdf.text(ligne.label, 20, y);
       pdf.setFont("helvetica", "bold");
-      pdf.text(ligne.value.replace("€", "EUR"), 190, y, { align: "right" });
+      pdf.text(pdfText(ligne.value.replace("€", "EUR")), 190, y, { align: "right" });
     });
     pdf.save("rapport-qrip.pdf");
     toast.success("Rapport PDF téléchargé.");
