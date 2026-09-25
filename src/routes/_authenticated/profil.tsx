@@ -7,7 +7,6 @@ import { BigButton, Screen } from "@/components/qrip/Screen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getBusinessLogoUrl, isProfileComplete, useProfile } from "@/lib/profile";
-import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";
 
 const CURRENCIES = ["XOF", "EUR", "USD"];
 
@@ -119,9 +118,7 @@ function Profil() {
   async function signOut() {
     await supabase.auth.signOut();
     queryClient.clear();
-    const knownPhone = localStorage.getItem(KNOWN_PHONE_KEY);
-    if (knownPhone) navigate({ to: "/code", search: { phone: knownPhone }, replace: true });
-    else navigate({ to: "/auth", replace: true });
+    navigate({ to: "/", replace: true });
   }
 
   return (
