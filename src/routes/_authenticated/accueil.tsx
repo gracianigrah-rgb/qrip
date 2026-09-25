@@ -158,7 +158,7 @@ function Accueil() {
         {isLoading && <p className="text-muted-foreground">Chargement…</p>}
         {!isLoading && invoices.length === 0 && (
           <p className="rounded-3xl bg-card p-5 text-center text-muted-foreground soft-shadow">
-            Aucune facture pour l'instant. Prenez votre première photo !
+            Aucune opération pour l'instant. Ajoutez votre premier achat ou votre première vente.
           </p>
         )}
         {invoices.slice(0, 12).map((inv) => (

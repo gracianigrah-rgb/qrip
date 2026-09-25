@@ -9,8 +9,8 @@
 - [x] Inclure l’identité complète dans les partages et exports PDF, CSV et Excel.
 - [x] Vérifier le profil, les icônes et chaque format de rapport.
 
-- [ ] Envoyer les membres déjà connus directement vers leur code secret.
-- [ ] Accepter les images et les PDF dans le parcours de facture.
-- [ ] Ajouter la saisie manuelle modifiable avant validation.
-- [ ] Afficher uniquement le nouveau logo sur l’écran d’ouverture.
-- [ ] Vérifier les nouveaux parcours de bout en bout.
+- [x] Envoyer les membres déjà connus directement vers leur code secret.
+- [x] Accepter les images et les PDF dans le parcours de facture.
+- [x] Ajouter la saisie manuelle modifiable avant validation.
+- [x] Afficher uniquement le nouveau logo sur l’écran d’ouverture.
+- [x] Vérifier les nouveaux parcours de bout en bout.

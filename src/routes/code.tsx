@@ -6,6 +6,7 @@ import { BigButton, Screen } from "@/components/qrip/Screen";
 import { Keypad, PinDots } from "@/components/qrip/Keypad";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePhone, phoneToEmail, pinToPassword } from "@/lib/qrip";
+import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";
 
 const searchSchema = z.object({ phone: z.string().catch("") });
 
@@ -41,6 +42,7 @@ function CodePage() {
 
   const clean = normalizePhone(phone);
   const email = phoneToEmail(clean);
+  const isKnownMember = typeof window !== "undefined" && localStorage.getItem(KNOWN_PHONE_KEY) === clean;
 
   async function finishSignUp(code: string) {
     const { data, error } = await supabase.auth.signUp({
@@ -62,6 +64,7 @@ function CodePage() {
     if (userId) {
       await supabase.from("profiles").upsert({ id: userId, phone: clean }, { onConflict: "id" });
     }
+    localStorage.setItem(KNOWN_PHONE_KEY, clean);
     toast.success("Compte créé, bienvenue sur qrip 🎉");
     navigate({ to: "/profil", replace: true });
 
@@ -85,8 +88,14 @@ function CodePage() {
         password: pinToPassword(clean, code),
       });
       if (!error) {
+        localStorage.setItem(KNOWN_PHONE_KEY, clean);
         toast.success("Content de vous revoir 👋");
         navigate({ to: "/accueil", replace: true });
+        return;
+      }
+      if (localStorage.getItem(KNOWN_PHONE_KEY) === clean) {
+        setPin("");
+        toast.error("Code secret incorrect.");
         return;
       }
       // No account with this code yet → treat as a new registration.
@@ -115,7 +124,9 @@ function CodePage() {
       <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-6 pt-6">
         <p className="text-center font-semibold text-muted-foreground">
           {step === "enter"
-            ? "Tapez votre code à 4 chiffres. S'il n'existe pas encore, nous le créerons."
+            ? isKnownMember
+              ? "Tapez simplement votre code secret à 4 chiffres."
+              : "Tapez votre code à 4 chiffres. S'il n'existe pas encore, nous le créerons."
             : "Retapez le même code pour le confirmer."}
         </p>
         <PinDots length={4} filled={pin.length} />
@@ -135,6 +146,14 @@ function CodePage() {
             }}
           >
             Changer de code
+          </BigButton>
+        )}
+        {step === "enter" && (
+          <BigButton tone="ghost" className="mt-4" onClick={() => {
+            localStorage.removeItem(KNOWN_PHONE_KEY);
+            navigate({ to: "/auth", replace: true });
+          }}>
+            Changer de numéro
           </BigButton>
         )}
       </div>

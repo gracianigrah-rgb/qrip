@@ -36,7 +36,7 @@ function AuthenticatedLayout() {
       <div className="pt-[calc(3.75rem+env(safe-area-inset-top))]">
         <Outlet />
       </div>
-      <BottomNav />
+       <BottomNav />
     </div>
   );
 }

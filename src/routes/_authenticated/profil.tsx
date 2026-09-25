@@ -118,7 +118,7 @@ function Profil() {
   async function signOut() {
     await supabase.auth.signOut();
     queryClient.clear();
-    navigate({ to: "/auth", replace: true });
+    navigate({ to: "/", replace: true });
   }
 
   return (

@@ -19,7 +19,7 @@ export function BottomNav() {
     >
       <div className="grid grid-cols-4">
         {tabs.map(({ to, label, icon: Icon }) => {
-          const active = pathname === to || (to === "/capture" && pathname === "/classer");
+          const active = pathname === to || (to === "/capture" && (pathname === "/classer" || pathname === "/saisie"));
           return (
             <Link
               key={to}

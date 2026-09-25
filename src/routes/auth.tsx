@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Phone } from "lucide-react";
 import { BigButton, Logo, Screen } from "@/components/qrip/Screen";
 import { normalizePhone, phoneDigits } from "@/lib/qrip";
+import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -24,6 +25,11 @@ function AuthPage() {
   const [phone, setPhone] = useState("");
   const digits = phoneDigits(phone);
   const valid = digits.length >= 8;
+
+  useEffect(() => {
+    const knownPhone = localStorage.getItem(KNOWN_PHONE_KEY);
+    if (knownPhone) navigate({ to: "/code", search: { phone: knownPhone }, replace: true });
+  }, [navigate]);
 
   return (
     <Screen

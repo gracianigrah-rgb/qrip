@@ -1,12 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Camera, ImagePlus } from "lucide-react";
+import { Camera, FileUp, Keyboard } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { BigButton, Screen } from "@/components/qrip/Screen";
+import { PENDING_KIND_KEY, savePendingDocument } from "@/lib/pending-invoice";
 
-export const PENDING_KEY = "qrip:pending-invoice";
-export const PENDING_KIND_KEY = "qrip:pending-kind";
 const captureSearchSchema = z.object({ kind: z.enum(["achat", "vente"]).optional() });
 
 export const Route = createFileRoute("/_authenticated/capture")({
@@ -37,6 +36,15 @@ async function toResizedDataUrl(file: File, max = 1400): Promise<string> {
   return canvas.toDataURL("image/jpeg", 0.82);
 }
 
+function toDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("file"));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 function Capture() {
   const navigate = useNavigate();
   const { kind } = Route.useSearch();
@@ -46,15 +54,25 @@ function Capture() {
 
   async function handleFile(file?: File | null) {
     if (!file) return;
+    const isPdf = file.type === "application/pdf";
+    const isImage = file.type.startsWith("image/");
+    if ((!isPdf && !isImage) || file.size > 10 * 1024 * 1024) {
+      toast.error("Choisissez une image ou un PDF de moins de 10 Mo.");
+      return;
+    }
     setBusy(true);
     try {
-      const dataUrl = await toResizedDataUrl(file);
-      sessionStorage.setItem(PENDING_KEY, dataUrl);
+      const dataUrl = isPdf ? await toDataUrl(file) : await toResizedDataUrl(file);
+      await savePendingDocument({
+        dataUrl,
+        mimeType: isPdf ? "application/pdf" : "image/jpeg",
+        fileName: file.name.slice(0, 120) || (isPdf ? "facture.pdf" : "facture.jpg"),
+      });
       if (kind) sessionStorage.setItem(PENDING_KIND_KEY, kind);
       else sessionStorage.removeItem(PENDING_KIND_KEY);
       navigate({ to: "/classer" });
     } catch {
-      toast.error("Cette image n'a pas pu être lue.");
+      toast.error("Ce document n'a pas pu être lu.");
     } finally {
       setBusy(false);
     }
@@ -72,9 +90,9 @@ function Capture() {
           <div className="animate-float mx-auto mb-4 flex size-24 items-center justify-center rounded-3xl bg-gradient-sun">
             <Camera className="size-12 text-sun-foreground" />
           </div>
-          <h2 className="text-2xl font-extrabold">Montrez-nous la facture</h2>
+          <h2 className="text-2xl font-extrabold">Ajoutez votre opération</h2>
           <p className="mt-2 text-muted-foreground">
-            Posez le papier à plat, bien éclairé. qrip lira le montant pour vous.
+            Photographiez la facture, importez un document ou saisissez les informations vous-même.
           </p>
         </div>
 
@@ -85,7 +103,12 @@ function Capture() {
         </BigButton>
         <BigButton tone="ghost" disabled={busy} onClick={() => galleryRef.current?.click()}>
           <span className="flex items-center justify-center gap-3">
-            <ImagePlus className="size-6" /> Importer une image
+            <FileUp className="size-6" /> Importer une image ou un PDF
+          </span>
+        </BigButton>
+        <BigButton tone="sun" disabled={busy} onClick={() => navigate({ to: "/saisie", search: { kind } })}>
+          <span className="flex items-center justify-center gap-3">
+            <Keyboard className="size-6" /> Saisir manuellement
           </span>
         </BigButton>
         {busy && <p className="text-center font-bold text-muted-foreground">Préparation…</p>}
@@ -102,7 +125,7 @@ function Capture() {
       <input
         ref={galleryRef}
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf"
         className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
