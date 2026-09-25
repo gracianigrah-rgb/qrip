@@ -92,6 +92,11 @@ function CodePage() {
         navigate({ to: "/accueil", replace: true });
         return;
       }
+      if (localStorage.getItem(KNOWN_PHONE_KEY) === clean) {
+        setPin("");
+        toast.error("Code secret incorrect.");
+        return;
+      }
       // No account with this code yet → treat as a new registration.
       setFirstPin(code);
       setPin("");

@@ -1,4 +1,3 @@
-export const PENDING_KEY = "qrip:pending-invoice";
 export const PENDING_KIND_KEY = "qrip:pending-kind";
 export const KNOWN_PHONE_KEY = "qrip:known-phone";
 
@@ -55,6 +54,5 @@ export async function clearPendingDocument() {
     transaction.onerror = () => reject(transaction.error);
   });
   db.close();
-  sessionStorage.removeItem(PENDING_KEY);
   sessionStorage.removeItem(PENDING_KIND_KEY);
 }

@@ -84,7 +84,7 @@ function ManualEntry() {
   }
 
   return (
-    <Screen back={reviewing ? undefined : "/capture"} title={reviewing ? "Vérifiez l’opération" : "Saisie manuelle"} className="space-y-5">
+    <Screen {...(!reviewing ? { back: "/capture" } : {})} title={reviewing ? "Vérifiez l’opération" : "Saisie manuelle"} className="space-y-5">
       {reviewing ? (
         <>
           <section className={cn("rounded-3xl p-6 card-pop", kind === "vente" ? "bg-gradient-teal" : "bg-gradient-flame")}>

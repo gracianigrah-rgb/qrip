@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Camera, FileUp, ImagePlus, Keyboard } from "lucide-react";
+import { Camera, FileUp, Keyboard } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { BigButton, Screen } from "@/components/qrip/Screen";
@@ -72,7 +72,7 @@ function Capture() {
       else sessionStorage.removeItem(PENDING_KIND_KEY);
       navigate({ to: "/classer" });
     } catch {
-      toast.error("Cette image n'a pas pu être lue.");
+      toast.error("Ce document n'a pas pu être lu.");
     } finally {
       setBusy(false);
     }
@@ -117,7 +117,7 @@ function Capture() {
       <input
         ref={cameraRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept="image/*"
         capture="environment"
         className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0])}
@@ -125,7 +125,7 @@ function Capture() {
       <input
         ref={galleryRef}
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf"
         className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
