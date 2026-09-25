@@ -6,6 +6,7 @@ import { BigButton, Screen } from "@/components/qrip/Screen";
 import { Keypad, PinDots } from "@/components/qrip/Keypad";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizePhone, phoneToEmail, pinToPassword } from "@/lib/qrip";
+import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";
 
 const searchSchema = z.object({ phone: z.string().catch("") });
 
@@ -62,6 +63,7 @@ function CodePage() {
     if (userId) {
       await supabase.from("profiles").upsert({ id: userId, phone: clean }, { onConflict: "id" });
     }
+    localStorage.setItem(KNOWN_PHONE_KEY, clean);
     toast.success("Compte créé, bienvenue sur qrip 🎉");
     navigate({ to: "/profil", replace: true });
 
@@ -85,6 +87,7 @@ function CodePage() {
         password: pinToPassword(clean, code),
       });
       if (!error) {
+        localStorage.setItem(KNOWN_PHONE_KEY, clean);
         toast.success("Content de vous revoir 👋");
         navigate({ to: "/accueil", replace: true });
         return;
@@ -135,6 +138,14 @@ function CodePage() {
             }}
           >
             Changer de code
+          </BigButton>
+        )}
+        {step === "enter" && (
+          <BigButton tone="ghost" className="mt-4" onClick={() => {
+            localStorage.removeItem(KNOWN_PHONE_KEY);
+            navigate({ to: "/auth", replace: true });
+          }}>
+            Changer de numéro
           </BigButton>
         )}
       </div>

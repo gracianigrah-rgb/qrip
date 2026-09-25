@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Logo } from "@/components/qrip/Screen";
 import { useSession } from "@/lib/qrip";
+import openingLogoAsset from "@/assets/qrip-opening-logo.jpg.asset.json";
+import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -32,22 +34,17 @@ function Splash() {
   useEffect(() => {
     if (loading) return;
     const timer = setTimeout(() => {
-      navigate({ to: session ? "/accueil" : "/auth", replace: true });
+      const knownPhone = localStorage.getItem(KNOWN_PHONE_KEY);
+      if (session) navigate({ to: "/accueil", replace: true });
+      else if (knownPhone) navigate({ to: "/code", search: { phone: knownPhone }, replace: true });
+      else navigate({ to: "/auth", replace: true });
     }, 1400);
     return () => clearTimeout(timer);
   }, [loading, session, navigate]);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-gradient-sun px-6">
-      <div className="animate-pop-in flex flex-col items-center gap-6">
-        <div className="animate-float">
-          <Logo size={128} />
-        </div>
-        <h1 className="text-6xl font-extrabold tracking-tight text-sun-foreground">qrip</h1>
-        <p className="text-center text-base font-semibold text-sun-foreground/80">
-          Vos factures, votre trésorerie.
-        </p>
-      </div>
+    <div className="flex min-h-[100dvh] items-center justify-center bg-card px-8">
+      <img src={openingLogoAsset.url} alt="qrip" className="animate-pop-in w-full max-w-sm object-contain" />
     </div>
   );
 }

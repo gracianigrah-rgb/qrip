@@ -4,7 +4,9 @@ import { attachAuth } from "@/lib/auth-attacher";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Input = z.object({
-  imageDataUrl: z.string().min(20),
+  documentDataUrl: z.string().min(20).max(15_000_000),
+  mimeType: z.enum(["image/jpeg", "application/pdf"]),
+  fileName: z.string().trim().min(1).max(120),
 });
 
 export type InvoiceSuggestion = {
@@ -17,7 +19,7 @@ export type InvoiceSuggestion = {
   error?: string;
 };
 
-const PROMPT = `Tu analyses la photo d'une facture ou d'un reçu pour un petit commerçant en Afrique de l'Ouest.
+const PROMPT = `Tu analyses une facture ou un reçu pour un petit commerçant en Afrique de l'Ouest.
 Réponds UNIQUEMENT avec un objet JSON, sans texte autour, avec ces clés :
 {"kind":"achat"|"vente","confidence":0-1,"amount":nombre,"merchant":"texte","invoice_date":"AAAA-MM-JJ","reason":"une phrase courte en français"}
 "vente" = le document prouve que l'utilisateur a vendu quelque chose (facture émise par lui, reçu client).
@@ -39,6 +41,34 @@ function extractText(payload: unknown): string {
   return parts.join("");
 }
 
+async function readResponseStream(response: Response): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) return "";
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const events = buffer.split("\n\n");
+    buffer = events.pop() ?? "";
+    for (const event of events) {
+      for (const line of event.split("\n")) {
+        if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+        try {
+          const payload = JSON.parse(line.slice(6)) as { type?: string; delta?: string; response?: unknown };
+          if (payload.type === "response.output_text.delta" && payload.delta) text += payload.delta;
+          if (payload.type === "response.completed" && !text && payload.response) text = extractText(payload.response);
+        } catch {
+          // Ignore incomplete/non-JSON SSE lines.
+        }
+      }
+    }
+    if (done) break;
+  }
+  return text;
+}
+
 export const analyzeInvoice = createServerFn({ method: "POST" })
   .middleware([attachAuth, requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
@@ -57,19 +87,24 @@ export const analyzeInvoice = createServerFn({ method: "POST" })
     const response = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${key}`,
+        "Lovable-API-Key": key,
+        "X-Lovable-AIG-SDK": "fetch",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "openai/gpt-6-astra",
-        reasoning: { effort: "low" },
+        stream: true,
+        reasoning: { effort: "low", summary: "auto" },
+        include: ["reasoning.encrypted_content"],
         store: false,
         input: [
           {
             role: "user",
             content: [
               { type: "input_text", text: PROMPT },
-              { type: "input_image", image_url: data.imageDataUrl },
+              ...(data.mimeType === "application/pdf"
+                ? [{ type: "input_file", filename: data.fileName, file_data: data.documentDataUrl }]
+                : [{ type: "input_image", image_url: data.documentDataUrl }]),
             ],
           },
         ],
@@ -84,8 +119,7 @@ export const analyzeInvoice = createServerFn({ method: "POST" })
       return { ...empty, error: "L'analyse automatique n'a pas abouti." };
     }
 
-    const payload = await response.json();
-    const text = extractText(payload);
+    const text = await readResponseStream(response);
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return { ...empty, error: "Analyse illisible" };
 
