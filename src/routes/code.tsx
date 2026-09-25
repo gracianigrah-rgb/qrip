@@ -42,6 +42,7 @@ function CodePage() {
 
   const clean = normalizePhone(phone);
   const email = phoneToEmail(clean);
+  const isKnownMember = typeof window !== "undefined" && localStorage.getItem(KNOWN_PHONE_KEY) === clean;
 
   async function finishSignUp(code: string) {
     const { data, error } = await supabase.auth.signUp({
@@ -123,7 +124,9 @@ function CodePage() {
       <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-6 pt-6">
         <p className="text-center font-semibold text-muted-foreground">
           {step === "enter"
-            ? "Tapez votre code à 4 chiffres. S'il n'existe pas encore, nous le créerons."
+            ? isKnownMember
+              ? "Tapez simplement votre code secret à 4 chiffres."
+              : "Tapez votre code à 4 chiffres. S'il n'existe pas encore, nous le créerons."
             : "Retapez le même code pour le confirmer."}
         </p>
         <PinDots length={4} filled={pin.length} />
