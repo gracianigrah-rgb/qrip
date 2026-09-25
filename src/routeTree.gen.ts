@@ -18,6 +18,7 @@ import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedClasserRouteImport } from './routes/_authenticated/classer'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
+import { Route as AuthenticatedSaisieRouteImport } from './routes/_authenticated/saisie'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +64,11 @@ const AuthenticatedRapportRoute = AuthenticatedRapportRouteImport.update({
   path: '/rapport',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSaisieRoute = AuthenticatedSaisieRouteImport.update({
+  id: '/saisie',
+  path: '/saisie',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/classer': typeof AuthenticatedClasserRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
+  '/saisie': typeof AuthenticatedSaisieRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/classer': typeof AuthenticatedClasserRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
+  '/saisie': typeof AuthenticatedSaisieRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_authenticated/classer': typeof AuthenticatedClasserRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/rapport': typeof AuthenticatedRapportRoute
+  '/_authenticated/saisie': typeof AuthenticatedSaisieRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/classer'
     | '/profil'
     | '/rapport'
+    | '/saisie'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/classer'
     | '/profil'
     | '/rapport'
+    | '/saisie'
   id:
     | '__root__'
     | '/'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/classer'
     | '/_authenticated/profil'
     | '/_authenticated/rapport'
+    | '/_authenticated/saisie'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -202,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRapportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/saisie': {
+      id: '/_authenticated/saisie'
+      path: '/saisie'
+      fullPath: '/saisie'
+      preLoaderRoute: typeof AuthenticatedSaisieRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -211,6 +230,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClasserRoute: typeof AuthenticatedClasserRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
+  AuthenticatedSaisieRoute: typeof AuthenticatedSaisieRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -219,6 +239,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClasserRoute: AuthenticatedClasserRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRapportRoute: AuthenticatedRapportRoute,
+  AuthenticatedSaisieRoute: AuthenticatedSaisieRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

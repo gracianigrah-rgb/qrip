@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Logo } from "@/components/qrip/Screen";
 import { useSession } from "@/lib/qrip";
 import openingLogoAsset from "@/assets/qrip-opening-logo.jpg.asset.json";
 import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";

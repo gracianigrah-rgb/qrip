@@ -2,10 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, FileText, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
-import { PENDING_KEY, PENDING_KIND_KEY } from "@/routes/_authenticated/capture";
+import { clearPendingDocument, getPendingDocument, PENDING_KIND_KEY, type PendingDocument } from "@/lib/pending-invoice";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeInvoice, type InvoiceSuggestion } from "@/lib/invoice-ai.functions";
 import type { Kind } from "@/lib/qrip";
@@ -35,7 +35,7 @@ function Classer() {
   const queryClient = useQueryClient();
   const analyze = useServerFn(analyzeInvoice);
 
-  const [image, setImage] = useState<string | null>(null);
+  const [document, setDocument] = useState<PendingDocument | null>(null);
   const [suggestion, setSuggestion] = useState<InvoiceSuggestion | null>(null);
   const [analyzing, setAnalyzing] = useState(true);
   const [kind, setKind] = useState<Kind | null>(null);
@@ -45,24 +45,28 @@ function Classer() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(PENDING_KEY);
-    if (!stored) {
+    getPendingDocument().then((stored) => {
+      if (!stored) {
+        navigate({ to: "/capture", replace: true });
+        return;
+      }
+      setDocument(stored);
+      const presetKind = sessionStorage.getItem(PENDING_KIND_KEY);
+      if (presetKind === "achat" || presetKind === "vente") setKind(presetKind);
+      analyze({ data: { documentDataUrl: stored.dataUrl, mimeType: stored.mimeType, fileName: stored.fileName } })
+        .then((result) => {
+          setSuggestion(result);
+          if (!presetKind && result.kind) setKind(result.kind);
+          if (result.amount) setAmount(String(result.amount));
+          if (result.merchant) setMerchant(result.merchant);
+          if (result.invoice_date) setDate(result.invoice_date);
+        })
+        .catch(() => setSuggestion(null))
+        .finally(() => setAnalyzing(false));
+    }).catch(() => {
+      toast.error("Le document n’a pas pu être ouvert.");
       navigate({ to: "/capture", replace: true });
-      return;
-    }
-    setImage(stored);
-    const presetKind = sessionStorage.getItem(PENDING_KIND_KEY);
-    if (presetKind === "achat" || presetKind === "vente") setKind(presetKind);
-    analyze({ data: { imageDataUrl: stored } })
-      .then((result) => {
-        setSuggestion(result);
-        if (!presetKind && result.kind) setKind(result.kind);
-        if (result.amount) setAmount(String(result.amount));
-        if (result.merchant) setMerchant(result.merchant);
-        if (result.invoice_date) setDate(result.invoice_date);
-      })
-      .catch(() => setSuggestion(null))
-      .finally(() => setAnalyzing(false));
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -84,12 +88,13 @@ function Classer() {
       if (!userId) throw new Error("no session");
 
       let imagePath: string | null = null;
-      if (image) {
-        const blob = await (await fetch(image)).blob();
-        const path = `${userId}/${Date.now()}.jpg`;
+      if (document) {
+        const blob = await (await fetch(document.dataUrl)).blob();
+        const extension = document.mimeType === "application/pdf" ? "pdf" : "jpg";
+        const path = `${userId}/${Date.now()}.${extension}`;
         const { error: upErr } = await supabase.storage
           .from("factures")
-          .upload(path, blob, { contentType: "image/jpeg" });
+          .upload(path, blob, { contentType: document.mimeType });
         if (!upErr) imagePath = path;
       }
 
@@ -105,8 +110,7 @@ function Classer() {
       });
       if (error) throw error;
 
-      sessionStorage.removeItem(PENDING_KEY);
-      sessionStorage.removeItem(PENDING_KIND_KEY);
+      await clearPendingDocument();
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
       toast.success(kind === "vente" ? "Vente enregistrée 🎉" : "Achat enregistré ✅");
       navigate({ to: "/accueil", replace: true });
@@ -128,13 +132,19 @@ function Classer() {
         </BigButton>
       }
     >
-      {image && (
+      {document?.mimeType === "image/jpeg" && (
         <img
-          src={image}
+          src={document.dataUrl}
           alt="Facture"
           className="h-40 w-full rounded-3xl object-cover soft-shadow"
           loading="lazy"
         />
+      )}
+      {document?.mimeType === "application/pdf" && (
+        <div className="flex items-center gap-4 rounded-3xl bg-card p-5 soft-shadow">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-sun"><FileText className="size-7 text-sun-foreground" /></div>
+          <div className="min-w-0"><p className="font-extrabold">Document PDF</p><p className="truncate text-sm font-semibold text-muted-foreground">{document.fileName}</p></div>
+        </div>
       )}
 
       <div className="rounded-3xl bg-card p-4 soft-shadow">
