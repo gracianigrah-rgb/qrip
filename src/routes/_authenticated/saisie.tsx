@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, Check, Pencil } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Check, Mic, Pencil } from "lucide-react";
+import { CATEGORIES, createRecognizer, parseVoiceCommand } from "@/lib/voice";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -41,10 +42,40 @@ function ManualEntry() {
   const [merchant, setMerchant] = useState("");
   const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState("");
+  const [category, setCategory] = useState<string>("Marchandises");
   const [reviewing, setReviewing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [heard, setHeard] = useState("");
 
   const parsedAmount = Number(amount.replace(/[^\d.,]/g, "").replace(",", "."));
+
+  function listen() {
+    const rec = createRecognizer();
+    if (!rec) {
+      toast.error("La commande vocale n’est pas disponible sur ce navigateur. Essayez Chrome ou Safari.");
+      return;
+    }
+    rec.onresult = (event) => {
+      const said: string = event.results?.[0]?.[0]?.transcript ?? "";
+      setHeard(said);
+      const result = parseVoiceCommand(said);
+      if (result.kind) setKind(result.kind);
+      if (result.amount) setAmount(String(result.amount));
+      if (result.item) setNote(result.item);
+      setCategory("Marchandises");
+      setDate(todayISO());
+      if (!result.kind || !result.amount) {
+        toast.error("Je n’ai pas tout compris. Complétez les champs ou réessayez.");
+        return;
+      }
+      setReviewing(true);
+    };
+    rec.onerror = () => toast.error("Micro indisponible ou rien entendu. Réessayez.");
+    rec.onend = () => setListening(false);
+    setListening(true);
+    rec.start();
+  }
 
   function review() {
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
@@ -71,6 +102,7 @@ function ManualEntry() {
         merchant: merchant.trim() || null,
         invoice_date: date,
         note: note.trim() || null,
+        category,
       });
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
@@ -92,9 +124,11 @@ function ManualEntry() {
             <p className={cn("mt-1 text-4xl font-extrabold", kind === "vente" ? "text-teal-foreground" : "text-primary-foreground")}>{new Intl.NumberFormat("fr-FR").format(parsedAmount)} F</p>
           </section>
           <section className="space-y-3 rounded-3xl bg-card p-5 soft-shadow">
+            {heard && <p className="rounded-2xl bg-muted px-3 py-2 text-sm font-semibold italic text-muted-foreground">« {heard} »</p>}
+            <div><p className="text-xs font-bold text-muted-foreground">Marchandise / détail</p><p className="whitespace-pre-wrap font-extrabold">{note.trim() || "Aucun détail"}</p></div>
+            <div><p className="text-xs font-bold text-muted-foreground">Catégorie</p><p className="font-extrabold">{category}</p></div>
             <div><p className="text-xs font-bold text-muted-foreground">Client / fournisseur</p><p className="font-extrabold">{merchant.trim() || "Non renseigné"}</p></div>
             <div><p className="text-xs font-bold text-muted-foreground">Date</p><p className="font-extrabold">{new Date(`${date}T12:00:00`).toLocaleDateString("fr-FR")}</p></div>
-            <div><p className="text-xs font-bold text-muted-foreground">Note</p><p className="whitespace-pre-wrap font-semibold">{note.trim() || "Aucune note"}</p></div>
           </section>
           <Button variant="outline" className="h-14 w-full rounded-2xl text-base font-extrabold" onClick={() => setReviewing(false)}>
             <Pencil className="size-5" /> Modifier
@@ -105,6 +139,10 @@ function ManualEntry() {
         </>
       ) : (
         <>
+          <BigButton tone="sun" onClick={listen} disabled={listening}>
+            <span className="flex items-center justify-center gap-2"><Mic className={cn("size-6", listening && "animate-pulse")} />{listening ? "Je vous écoute…" : "Dicter l’opération"}</span>
+          </BigButton>
+          <p className="-mt-2 text-center text-xs font-semibold text-muted-foreground">Dites : « J’ai vendu du riz 15000 » ou « J’ai acheté du ciment 30000 »</p>
           <div className="grid grid-cols-2 gap-4">
             <Button type="button" variant="ghost" onClick={() => setKind("achat")} className={cn("h-28 flex-col rounded-3xl bg-gradient-flame text-primary-foreground card-pop", kind !== "achat" && "opacity-40")}>
               <ArrowDownLeft className="size-8" /><span className="text-lg font-extrabold">ACHAT</span>
@@ -115,9 +153,10 @@ function ManualEntry() {
           </div>
           <section className="space-y-4 rounded-3xl bg-card p-5 soft-shadow">
             <label className="block"><span className="text-sm font-bold text-muted-foreground">Montant</span><input inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0" className="mt-2 w-full rounded-2xl bg-muted px-4 py-3 text-2xl font-extrabold outline-none" /></label>
+            <label className="block"><span className="text-sm font-bold text-muted-foreground">Marchandise / détail</span><textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} placeholder="Ex. : sac de riz" className="mt-2 w-full resize-none rounded-2xl bg-muted px-4 py-3 font-semibold outline-none" /></label>
+            <label className="block"><span className="text-sm font-bold text-muted-foreground">Catégorie</span><select value={category} onChange={(event) => setCategory(event.target.value)} className="mt-2 w-full rounded-2xl bg-muted px-4 py-3 font-bold outline-none">{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></label>
             <label className="block"><span className="text-sm font-bold text-muted-foreground">Client / fournisseur</span><input value={merchant} onChange={(event) => setMerchant(event.target.value)} maxLength={80} placeholder="Nom (facultatif)" className="mt-2 w-full rounded-2xl bg-muted px-4 py-3 font-bold outline-none" /></label>
             <label className="block"><span className="text-sm font-bold text-muted-foreground">Date</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="mt-2 w-full rounded-2xl bg-muted px-4 py-3 font-bold outline-none" /></label>
-            <label className="block"><span className="text-sm font-bold text-muted-foreground">Note</span><textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={3} placeholder="Détail utile (facultatif)" className="mt-2 w-full resize-none rounded-2xl bg-muted px-4 py-3 font-semibold outline-none" /></label>
           </section>
           <BigButton onClick={review}>Vérifier avant de valider</BigButton>
         </>
