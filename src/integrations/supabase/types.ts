@@ -19,6 +19,7 @@ export type Database = {
           ai_confidence: number | null
           ai_kind: Database["public"]["Enums"]["invoice_kind"] | null
           amount: number
+          category: string | null
           created_at: string
           currency: string
           id: string
@@ -33,6 +34,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_kind?: Database["public"]["Enums"]["invoice_kind"] | null
           amount?: number
+          category?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -47,6 +49,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_kind?: Database["public"]["Enums"]["invoice_kind"] | null
           amount?: number
+          category?: string | null
           created_at?: string
           currency?: string
           id?: string
