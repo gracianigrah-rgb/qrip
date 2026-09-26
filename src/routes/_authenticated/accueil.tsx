@@ -6,6 +6,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { Screen } from "@/components/qrip/Screen";
 import { formatMoney } from "@/lib/qrip";
 import { isProfileComplete, useProfile } from "@/lib/profile";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { CATEGORIES } from "@/lib/voice";
+
+const PERIODS = [
+  { id: "all", label: "Tout" },
+  { id: "today", label: "Aujourd'hui" },
+  { id: "7d", label: "7 jours" },
+  { id: "month", label: "Ce mois" },
+  { id: "year", label: "Cette année" },
+] as const;
+type PeriodId = (typeof PERIODS)[number]["id"];
+
+function periodStart(id: PeriodId): string | null {
+  const d = new Date();
+  const iso = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+  if (id === "today") return iso(d);
+  if (id === "7d") return iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 6));
+  if (id === "month") return iso(new Date(d.getFullYear(), d.getMonth(), 1));
+  if (id === "year") return `${d.getFullYear()}-01-01`;
+  return null;
+}
+
 
 
 export const Route = createFileRoute("/_authenticated/accueil")({
@@ -43,6 +66,18 @@ function Accueil() {
   const { data: profile } = useProfile();
   const needsProfile = !isProfileComplete(profile);
   const businessName = profile?.business_name?.trim() || "Mon entreprise";
+  const [period, setPeriod] = useState<PeriodId>("all");
+  const [kindFilter, setKindFilter] = useState<"all" | "achat" | "vente">("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const since = periodStart(period);
+  const filtered = invoices.filter(
+    (i) =>
+      (!since || i.invoice_date >= since) &&
+      (kindFilter === "all" || i.kind === kindFilter) &&
+      (categoryFilter === "all" || (i.category ?? "Autre") === categoryFilter),
+  );
+  const filteredTotal = filtered.reduce((s, i) => s + (i.kind === "vente" ? 1 : -1) * Number(i.amount), 0);
+
 
 
   const ventes = invoices.filter((i) => i.kind === "vente").reduce((s, i) => s + Number(i.amount), 0);
@@ -154,14 +189,31 @@ function Accueil() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-extrabold">Dernières factures</h2>
+        <h2 className="text-lg font-extrabold">Opérations</h2>
+        <div className="space-y-2 rounded-3xl bg-card p-4 soft-shadow">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {PERIODS.map((p) => (
+              <button key={p.id} type="button" onClick={() => setPeriod(p.id)} className={cn("press shrink-0 rounded-full px-4 py-2 text-sm font-extrabold", period === p.id ? "bg-gradient-sun text-sun-foreground" : "bg-muted text-muted-foreground")}>{p.label}</button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            {([["all", "Tout"], ["vente", "Ventes"], ["achat", "Achats"]] as const).map(([id, label]) => (
+              <button key={id} type="button" onClick={() => setKindFilter(id)} className={cn("press flex-1 rounded-full px-3 py-2 text-sm font-extrabold", kindFilter === id ? (id === "achat" ? "bg-gradient-flame text-primary-foreground" : "bg-gradient-teal text-teal-foreground") : "bg-muted text-muted-foreground")}>{label}</button>
+            ))}
+          </div>
+          <select aria-label="Catégorie" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="w-full rounded-2xl bg-muted px-4 py-2.5 text-sm font-bold outline-none">
+            <option value="all">Toutes les catégories</option>
+            {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <p className="text-xs font-bold text-muted-foreground">{filtered.length} opération(s) · {formatMoney(filteredTotal)}</p>
+        </div>
         {isLoading && <p className="text-muted-foreground">Chargement…</p>}
-        {!isLoading && invoices.length === 0 && (
+        {!isLoading && filtered.length === 0 && (
           <p className="rounded-3xl bg-card p-5 text-center text-muted-foreground soft-shadow">
-            Aucune opération pour l'instant. Ajoutez votre premier achat ou votre première vente.
+            {invoices.length === 0 ? "Aucune opération pour l'instant. Ajoutez votre premier achat ou votre première vente." : "Aucune opération pour ces filtres."}
           </p>
         )}
-        {invoices.slice(0, 12).map((inv) => (
+        {filtered.slice(0, 50).map((inv) => (
           <div key={inv.id} className="flex items-center gap-3 rounded-3xl bg-card p-4 soft-shadow">
             <div
               className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${
@@ -175,9 +227,9 @@ function Accueil() {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-extrabold">{inv.merchant || (inv.kind === "vente" ? "Vente" : "Achat")}</p>
+              <p className="truncate font-extrabold">{inv.merchant || inv.note || (inv.kind === "vente" ? "Vente" : "Achat")}</p>
               <p className="text-xs font-semibold text-muted-foreground">
-                {new Date(inv.invoice_date).toLocaleDateString("fr-FR")}
+                {new Date(inv.invoice_date).toLocaleDateString("fr-FR")}{inv.category ? ` · ${inv.category}` : ""}
               </p>
             </div>
             <p className={`font-extrabold ${inv.kind === "vente" ? "text-teal-deep" : "text-primary"}`}>
