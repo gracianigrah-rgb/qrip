@@ -9,8 +9,8 @@ export function parseVoiceCommand(raw: string): VoiceResult {
   let text = raw.toLowerCase().replace(/[’']/g, "'").trim();
   let kind: Kind | null = null;
   if (/\b(vendu|vend|vente|vendre)\b/.test(text)) kind = "vente";
-  else if (/\b(achet\w*|achat)\b/.test(text)) kind = "achat";
-  text = text.replace(/^(j'ai|j ai|je)\s+/, "").replace(/^(vendu|vend|vendre|achet\w*)\s+/, "");
+  else if (/\b(achet[a-zéèr]*|achat)\b/.test(text)) kind = "achat";
+  text = text.replace(/^(j'ai|j ai|je)\s+/, "").replace(/^(vendu|vend|vendre|achet[a-zéèr]*)\s+/, "");
   // join spoken thousands like "15 000"
   text = text.replace(/(\d)[\s\u00a0\u202f.](?=\d{3}\b)/g, "$1");
   const numbers = [...text.matchAll(/\d+(?:[.,]\d+)?/g)];
