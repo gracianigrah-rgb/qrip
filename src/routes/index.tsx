@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession } from "@/lib/qrip";
-import openingLogoAsset from "@/assets/qrip-opening-logo.jpg.asset.json";
+import openingLogoAsset from "@/assets/qrip-antelope.png.asset.json";
 import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";
 
 export const Route = createFileRoute("/")({
@@ -42,8 +42,8 @@ function Splash() {
   }, [loading, session, navigate]);
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-card px-8">
-      <img src={openingLogoAsset.url} alt="qrip" className="animate-pop-in w-full max-w-sm object-contain" />
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-8">
+      <img src={openingLogoAsset.url} alt="qrip" className="animate-pop-in w-3/4 max-w-xs object-contain drop-shadow-xl" />
     </div>
   );
 }
