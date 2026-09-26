@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Phone } from "lucide-react";
-import { BigButton, Logo, Screen } from "@/components/qrip/Screen";
+import { BigButton, Screen } from "@/components/qrip/Screen";
+import antelopeAsset from "@/assets/qrip-antelope.png.asset.json";
 import { normalizePhone, phoneDigits } from "@/lib/qrip";
 import { KNOWN_PHONE_KEY } from "@/lib/pending-invoice";
 
@@ -44,9 +45,9 @@ function AuthPage() {
       }
     >
       <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-8">
-        <Logo size={88} />
+        <img src={antelopeAsset.url} alt="Logo" className="w-32 drop-shadow-xl" />
         <div className="text-center">
-          <h1 className="text-3xl font-extrabold">Bienvenue sur qrip</h1>
+          <h1 className="text-3xl font-extrabold">Bienvenue</h1>
           <p className="mt-2 text-muted-foreground">
             Entrez votre numéro de téléphone. Vous choisirez ensuite un code à 4 chiffres.
           </p>
