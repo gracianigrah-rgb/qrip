@@ -73,7 +73,7 @@ function UsersTab() {
   async function save() {
     if (!editing) return;
     const { error } = await supabase.from("profiles").update({ business_name: editing.business_name, owner_name: editing.owner_name, city: editing.city, country: editing.country, currency: editing.currency }).eq("id", editing.id);
-    if (error) return toast.error("Modification impossible.");
+    if (error) { toast.error("Modification impossible."); return; }
     toast.success("Utilisateur mis à jour.");
     setEditing(null);
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
@@ -83,7 +83,7 @@ function UsersTab() {
     if (!confirm(`Supprimer le profil et toutes les opérations de ${p.business_name || p.phone} ?`)) return;
     await supabase.from("invoices").delete().eq("user_id", p.id);
     const { error } = await supabase.from("profiles").delete().eq("id", p.id);
-    if (error) return toast.error("Suppression impossible.");
+    if (error) { toast.error("Suppression impossible."); return; }
     toast.success("Profil supprimé.");
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
   }
@@ -150,15 +150,15 @@ function OpsTab() {
     const v = prompt("Nouveau montant", String(i.amount));
     if (v === null) return;
     const amount = Number(v.replace(/\s/g, ""));
-    if (!Number.isFinite(amount) || amount < 0) return toast.error("Montant invalide.");
+    if (!Number.isFinite(amount) || amount < 0) { toast.error("Montant invalide."); return; }
     const { error } = await supabase.from("invoices").update({ amount }).eq("id", i.id);
-    if (error) return toast.error("Modification impossible.");
+    if (error) { toast.error("Modification impossible."); return; }
     qc.invalidateQueries({ queryKey: ["admin-invoices"] });
   }
   async function remove(i: AdminInvoice) {
     if (!confirm("Supprimer cette opération ?")) return;
     const { error } = await supabase.from("invoices").delete().eq("id", i.id);
-    if (error) return toast.error("Suppression impossible.");
+    if (error) { toast.error("Suppression impossible."); return; }
     qc.invalidateQueries({ queryKey: ["admin-invoices"] });
   }
 
@@ -197,11 +197,11 @@ function NotifyTab() {
   const [sending, setSending] = useState(false);
 
   async function send() {
-    if (!title.trim() || !body.trim()) return toast.error("Ajoutez un titre et un message.");
+    if (!title.trim() || !body.trim()) { toast.error("Ajoutez un titre et un message."); return; }
     setSending(true);
-    const { data, error } = await supabase.rpc("send_notification", { _title: title, _body: body, _country: country || undefined, _city: city || undefined, _currency: currency || undefined, _incomplete_only: incompleteOnly });
+    const { data, error } = await supabase.rpc("send_notification", { _title: title, _body: body, _country: country, _city: city, _currency: currency, _incomplete_only: incompleteOnly });
     setSending(false);
-    if (error) return toast.error("Envoi impossible.");
+    if (error) { toast.error("Envoi impossible."); return; }
     toast.success(`Notification envoyée à ${data} utilisateur(s).`);
     setTitle("");
     setBody("");
