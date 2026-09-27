@@ -14,8 +14,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CodeRouteImport } from './routes/code'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
 import { Route as AuthenticatedClasserRouteImport } from './routes/_authenticated/classer'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
 import { Route as AuthenticatedSaisieRouteImport } from './routes/_authenticated/saisie'
@@ -44,6 +46,11 @@ const AuthenticatedAccueilRoute = AuthenticatedAccueilRouteImport.update({
   path: '/accueil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   id: '/capture',
   path: '/capture',
@@ -54,6 +61,12 @@ const AuthenticatedClasserRoute = AuthenticatedClasserRouteImport.update({
   path: '/classer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
@@ -75,8 +88,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/code': typeof CodeRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/classer': typeof AuthenticatedClasserRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/saisie': typeof AuthenticatedSaisieRoute
@@ -86,8 +101,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/code': typeof CodeRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/capture': typeof AuthenticatedCaptureRoute
   '/classer': typeof AuthenticatedClasserRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/saisie': typeof AuthenticatedSaisieRoute
@@ -99,8 +116,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/code': typeof CodeRoute
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
   '/_authenticated/classer': typeof AuthenticatedClasserRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/rapport': typeof AuthenticatedRapportRoute
   '/_authenticated/saisie': typeof AuthenticatedSaisieRoute
@@ -112,8 +131,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/code'
     | '/accueil'
+    | '/admin'
     | '/capture'
     | '/classer'
+    | '/notifications'
     | '/profil'
     | '/rapport'
     | '/saisie'
@@ -123,8 +144,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/code'
     | '/accueil'
+    | '/admin'
     | '/capture'
     | '/classer'
+    | '/notifications'
     | '/profil'
     | '/rapport'
     | '/saisie'
@@ -135,8 +158,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/code'
     | '/_authenticated/accueil'
+    | '/_authenticated/admin'
     | '/_authenticated/capture'
     | '/_authenticated/classer'
+    | '/_authenticated/notifications'
     | '/_authenticated/profil'
     | '/_authenticated/rapport'
     | '/_authenticated/saisie'
@@ -186,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccueilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/capture': {
       id: '/_authenticated/capture'
       path: '/capture'
@@ -198,6 +230,13 @@ declare module '@tanstack/react-router' {
       path: '/classer'
       fullPath: '/classer'
       preLoaderRoute: typeof AuthenticatedClasserRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profil': {
@@ -226,8 +265,10 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
   AuthenticatedClasserRoute: typeof AuthenticatedClasserRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
   AuthenticatedSaisieRoute: typeof AuthenticatedSaisieRoute
@@ -235,8 +276,10 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccueilRoute: AuthenticatedAccueilRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
   AuthenticatedClasserRoute: AuthenticatedClasserRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRapportRoute: AuthenticatedRapportRoute,
   AuthenticatedSaisieRoute: AuthenticatedSaisieRoute,
