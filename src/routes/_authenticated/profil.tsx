@@ -1,6 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, Camera, Flag, LogOut, MapPin, Phone, WalletCards } from "lucide-react";
+import { Building2, Camera, Flag, LogOut, MapPin, Phone, ShieldCheck, User, WalletCards } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { useIsAdmin } from "@/lib/admin";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
@@ -29,6 +31,8 @@ function Profil() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [businessName, setBusinessName] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const { data: isAdmin } = useIsAdmin();
   const [currency, setCurrency] = useState("XOF");
   const [businessPhone, setBusinessPhone] = useState("");
   const [city, setCity] = useState("");
@@ -44,6 +48,7 @@ function Profil() {
 
   useEffect(() => {
     if (profile?.business_name) setBusinessName(profile.business_name);
+    if (profile?.owner_name) setOwnerName(profile.owner_name);
     if (profile?.currency) setCurrency(profile.currency);
     if (profile?.business_phone) setBusinessPhone(profile.business_phone);
     if (profile?.city) setCity(profile.city);
@@ -68,6 +73,10 @@ function Profil() {
     const name = businessName.trim();
     if (name.length < 2) {
       toast.error("Entrez le nom de votre entreprise.");
+      return;
+    }
+    if (ownerName.trim().length < 2) {
+      toast.error("Entrez le nom du propriétaire.");
       return;
     }
     if (!businessPhone.trim() || !city.trim() || !country.trim() || !neighborhood.trim()) {
@@ -95,6 +104,7 @@ function Profil() {
         .from("profiles")
         .update({
           business_name: name,
+          owner_name: ownerName.trim(),
           business_phone: businessPhone.trim(),
           city: city.trim(),
           country: country.trim(),
@@ -175,6 +185,14 @@ function Profil() {
         </label>
 
         <label className="block">
+          <span className="text-sm font-bold text-muted-foreground">Nom du propriétaire ou créateur du compte</span>
+          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-muted px-4 py-3">
+            <User className="size-5 shrink-0 text-muted-foreground" />
+            <input value={ownerName} onChange={(event) => setOwnerName(event.target.value)} maxLength={80} placeholder="Prénom et nom" className="min-w-0 flex-1 bg-transparent font-bold outline-none" />
+          </div>
+        </label>
+
+        <label className="block">
           <span className="text-sm font-bold text-muted-foreground">Téléphone professionnel</span>
           <div className="mt-2 flex items-center gap-3 rounded-2xl bg-muted px-4 py-3">
             <Phone className="size-5 shrink-0 text-muted-foreground" />
@@ -238,6 +256,12 @@ function Profil() {
           {saving ? "Enregistrement…" : "Enregistrer mon profil"}
         </BigButton>
       </section>
+
+      {isAdmin && (
+        <Link to="/admin" className="press flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-sun text-base font-extrabold text-sun-foreground card-pop active:press-active">
+          <ShieldCheck className="size-5" /> Espace administrateur
+        </Link>
+      )}
 
       <Button variant="destructive" size="lg" onClick={signOut} className="h-14 w-full rounded-2xl text-base font-extrabold">
         <LogOut className="size-5" /> Se déconnecter

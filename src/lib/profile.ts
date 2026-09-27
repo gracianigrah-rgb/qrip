@@ -11,9 +11,10 @@ export type Profile = {
   country: string | null;
   neighborhood: string | null;
   logo_path: string | null;
+  owner_name: string | null;
 };
 
-const PROFILE_FIELDS = "id, phone, currency, business_name, business_phone, city, country, neighborhood, logo_path";
+const PROFILE_FIELDS = "id, phone, currency, business_name, business_phone, city, country, neighborhood, logo_path, owner_name";
 
 /** Reads the profile and creates the row for older accounts that never had one. */
 export async function fetchOrCreateProfile(): Promise<Profile | null> {
@@ -46,6 +47,7 @@ export function useProfile() {
 export function isProfileComplete(profile?: Profile | null) {
   return Boolean(
     profile?.business_name?.trim() &&
+      profile.owner_name?.trim() &&
       profile.business_phone?.trim() &&
       profile.city?.trim() &&
       profile.country?.trim() &&
