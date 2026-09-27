@@ -29,6 +29,13 @@
       "when": 1790462360312,
       "tag": "0003_add_invoice_category",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790471148984,
+      "tag": "0004_admin_notifications_owner",
+      "breakpoints": true
     }
   ]
 }

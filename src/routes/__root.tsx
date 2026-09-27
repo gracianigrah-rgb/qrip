@@ -87,7 +87,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "qrip transforme vos photos de factures en trésorerie claire : achats, ventes, résultat et rapport à partager.",
       },
-      { name: "theme-color", content: "#FF6B1A" },
+      { name: "theme-color", content: "#FFD307" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "qrip" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
