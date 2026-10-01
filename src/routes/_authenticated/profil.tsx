@@ -234,7 +234,7 @@ function Profil() {
         </div>
 
         <label className="block">
-          <span className="text-sm font-bold text-muted-foreground">Devise</span>
+          <span className="text-sm font-bold text-muted-foreground">Devise des prix</span>
           <div className="mt-2 flex items-center gap-3 rounded-2xl bg-muted px-4 py-3">
             <WalletCards className="size-5 shrink-0 text-muted-foreground" />
             <select
@@ -244,7 +244,7 @@ function Profil() {
             >
               {CURRENCIES.map((code) => (
                 <option key={code} value={code}>
-                  {code}
+                  {code === "XOF" ? "F CFA (XOF)" : code === "EUR" ? "Euro (€)" : "Dollar ($)"}
                 </option>
               ))}
             </select>

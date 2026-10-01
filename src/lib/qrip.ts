@@ -6,11 +6,18 @@ export type Kind = "achat" | "vente";
 
 export const CURRENCY = "XOF";
 
-export function formatMoney(value: number, currency = CURRENCY) {
+let displayCurrency = CURRENCY;
+/** Currency chosen in the profile settings; used when no currency is passed. */
+export function setDisplayCurrency(code?: string | null) {
+  displayCurrency = code || CURRENCY;
+}
+
+export function formatMoney(value: number, currency?: string | null) {
+  currency = currency || displayCurrency;
   const rounded = Math.round(value);
   const formatted = new Intl.NumberFormat("fr-FR").format(Math.abs(rounded));
   const sign = rounded < 0 ? "-" : "";
-  if (currency === "XOF") return `${sign}${formatted} F`;
+  if (currency === "XOF") return `${sign}${formatted} F CFA`;
   if (currency === "EUR") return `${sign}${formatted} €`;
   if (currency === "USD") return `${sign}$${formatted}`;
   return `${sign}${formatted} ${currency}`;
