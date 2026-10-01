@@ -20,6 +20,7 @@ export type Database = {
           ai_kind: Database["public"]["Enums"]["invoice_kind"] | null
           amount: number
           category: string | null
+          contact_phone: string | null
           created_at: string
           currency: string
           id: string
@@ -28,6 +29,8 @@ export type Database = {
           kind: Database["public"]["Enums"]["invoice_kind"]
           merchant: string | null
           note: string | null
+          on_credit: boolean
+          settled_at: string | null
           user_id: string
         }
         Insert: {
@@ -35,6 +38,7 @@ export type Database = {
           ai_kind?: Database["public"]["Enums"]["invoice_kind"] | null
           amount?: number
           category?: string | null
+          contact_phone?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -43,6 +47,8 @@ export type Database = {
           kind: Database["public"]["Enums"]["invoice_kind"]
           merchant?: string | null
           note?: string | null
+          on_credit?: boolean
+          settled_at?: string | null
           user_id: string
         }
         Update: {
@@ -50,6 +56,7 @@ export type Database = {
           ai_kind?: Database["public"]["Enums"]["invoice_kind"] | null
           amount?: number
           category?: string | null
+          contact_phone?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -58,6 +65,8 @@ export type Database = {
           kind?: Database["public"]["Enums"]["invoice_kind"]
           merchant?: string | null
           note?: string | null
+          on_credit?: boolean
+          settled_at?: string | null
           user_id?: string
         }
         Relationships: []
