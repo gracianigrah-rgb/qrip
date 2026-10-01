@@ -16,6 +16,7 @@ import { Route as CodeRouteImport } from './routes/code'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
+import { Route as AuthenticatedCarnetRouteImport } from './routes/_authenticated/carnet'
 import { Route as AuthenticatedClasserRouteImport } from './routes/_authenticated/classer'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
@@ -56,6 +57,11 @@ const AuthenticatedCaptureRoute = AuthenticatedCaptureRouteImport.update({
   path: '/capture',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCarnetRoute = AuthenticatedCarnetRouteImport.update({
+  id: '/carnet',
+  path: '/carnet',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedClasserRoute = AuthenticatedClasserRouteImport.update({
   id: '/classer',
   path: '/classer',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/accueil': typeof AuthenticatedAccueilRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/carnet': typeof AuthenticatedCarnetRoute
   '/classer': typeof AuthenticatedClasserRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/accueil': typeof AuthenticatedAccueilRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/capture': typeof AuthenticatedCaptureRoute
+  '/carnet': typeof AuthenticatedCarnetRoute
   '/classer': typeof AuthenticatedClasserRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profil': typeof AuthenticatedProfilRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
+  '/_authenticated/carnet': typeof AuthenticatedCarnetRoute
   '/_authenticated/classer': typeof AuthenticatedClasserRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/accueil'
     | '/admin'
     | '/capture'
+    | '/carnet'
     | '/classer'
     | '/notifications'
     | '/profil'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/accueil'
     | '/admin'
     | '/capture'
+    | '/carnet'
     | '/classer'
     | '/notifications'
     | '/profil'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accueil'
     | '/_authenticated/admin'
     | '/_authenticated/capture'
+    | '/_authenticated/carnet'
     | '/_authenticated/classer'
     | '/_authenticated/notifications'
     | '/_authenticated/profil'
@@ -225,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCaptureRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/carnet': {
+      id: '/_authenticated/carnet'
+      path: '/carnet'
+      fullPath: '/carnet'
+      preLoaderRoute: typeof AuthenticatedCarnetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/classer': {
       id: '/_authenticated/classer'
       path: '/classer'
@@ -267,6 +286,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedCaptureRoute: typeof AuthenticatedCaptureRoute
+  AuthenticatedCarnetRoute: typeof AuthenticatedCarnetRoute
   AuthenticatedClasserRoute: typeof AuthenticatedClasserRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
@@ -278,6 +298,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccueilRoute: AuthenticatedAccueilRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedCaptureRoute: AuthenticatedCaptureRoute,
+  AuthenticatedCarnetRoute: AuthenticatedCarnetRoute,
   AuthenticatedClasserRoute: AuthenticatedClasserRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,

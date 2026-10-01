@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, Building2, ChevronRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BookOpen, Building2, ChevronRight, Moon } from "lucide-react";
+import { DailySummary, useEveningTrigger } from "@/components/qrip/DailySummary";
+import { isOpenCredit } from "@/lib/credit";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Screen } from "@/components/qrip/Screen";
@@ -80,8 +82,14 @@ function Accueil() {
 
 
 
-  const ventes = invoices.filter((i) => i.kind === "vente").reduce((s, i) => s + Number(i.amount), 0);
-  const achats = invoices.filter((i) => i.kind === "achat").reduce((s, i) => s + Number(i.amount), 0);
+  const paid = invoices.filter((i) => !isOpenCredit(i));
+  const ventes = paid.filter((i) => i.kind === "vente").reduce((s, i) => s + Number(i.amount), 0);
+  const achats = paid.filter((i) => i.kind === "achat").reduce((s, i) => s + Number(i.amount), 0);
+  const owedToMe = invoices.filter((i) => i.kind === "vente" && isOpenCredit(i)).reduce((s, i) => s + Number(i.amount), 0);
+  const iOwe = invoices.filter((i) => i.kind === "achat" && isOpenCredit(i)).reduce((s, i) => s + Number(i.amount), 0);
+  const todayKey = periodStart("today")!;
+  const [bilanOpen, setBilanOpen] = useEveningTrigger(invoices.some((i) => i.invoice_date === todayKey));
+  const currency = profile?.currency ?? undefined;
   const solde = ventes - achats;
   const now = new Date();
   const chartData = Array.from({ length: 6 }, (_, index) => {
@@ -163,6 +171,21 @@ function Accueil() {
         </div>
       </section>
 
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/carnet" className="press rounded-3xl bg-card p-4 soft-shadow active:press-active">
+          <p className="flex items-center gap-1 text-sm font-extrabold"><BookOpen className="size-4 text-primary" /> Carnet de crédit</p>
+          <p className="mt-1 text-xs font-bold text-muted-foreground">On me doit</p>
+          <p className="font-extrabold text-teal-deep">{formatMoney(owedToMe, currency)}</p>
+          <p className="text-xs font-bold text-muted-foreground">Je dois</p>
+          <p className="font-extrabold text-primary">{formatMoney(iOwe, currency)}</p>
+        </Link>
+        <button type="button" onClick={() => setBilanOpen(true)} className="press flex flex-col items-start justify-between rounded-3xl bg-gradient-sun p-4 text-left text-sun-foreground card-pop active:press-active">
+          <Moon className="size-7" />
+          <span><span className="block text-lg font-extrabold leading-tight">Bilan du soir</span><span className="text-xs font-bold opacity-80">Ma caisse du jour en PDF ou WhatsApp</span></span>
+        </button>
+      </div>
+      <DailySummary invoices={invoices} business={businessName} currency={currency} open={bilanOpen} onOpenChange={setBilanOpen} />
+
       <section className="rounded-3xl bg-card p-5 soft-shadow">
         <div className="mb-4 flex items-end justify-between">
           <div>
@@ -229,7 +252,7 @@ function Accueil() {
             <div className="min-w-0 flex-1">
               <p className="truncate font-extrabold">{inv.merchant || inv.note || (inv.kind === "vente" ? "Vente" : "Achat")}</p>
               <p className="text-xs font-semibold text-muted-foreground">
-                {new Date(inv.invoice_date).toLocaleDateString("fr-FR")}{inv.category ? ` · ${inv.category}` : ""}
+                {new Date(inv.invoice_date).toLocaleDateString("fr-FR")}{inv.category ? ` · ${inv.category}` : ""}{inv.on_credit ? (inv.settled_at ? " · Crédit soldé" : " · À crédit") : ""}
               </p>
             </div>
             <p className={`font-extrabold ${inv.kind === "vente" ? "text-teal-deep" : "text-primary"}`}>
