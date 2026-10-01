@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { BigButton, Screen } from "@/components/qrip/Screen";
+import { CreditFields } from "@/components/qrip/CreditFields";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Kind } from "@/lib/qrip";
@@ -47,6 +48,8 @@ function ManualEntry() {
   const [saving, setSaving] = useState(false);
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState("");
+  const [onCredit, setOnCredit] = useState(false);
+  const [contactPhone, setContactPhone] = useState("");
 
   const parsedAmount = Number(amount.replace(/[^\d.,]/g, "").replace(",", "."));
 
@@ -103,6 +106,8 @@ function ManualEntry() {
         invoice_date: date,
         note: note.trim() || null,
         category,
+        on_credit: onCredit,
+        contact_phone: onCredit ? contactPhone.trim() || null : null,
       });
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
@@ -129,6 +134,7 @@ function ManualEntry() {
             <div><p className="text-xs font-bold text-muted-foreground">Catégorie</p><p className="font-extrabold">{category}</p></div>
             <div><p className="text-xs font-bold text-muted-foreground">Client / fournisseur</p><p className="font-extrabold">{merchant.trim() || "Non renseigné"}</p></div>
             <div><p className="text-xs font-bold text-muted-foreground">Date</p><p className="font-extrabold">{new Date(`${date}T12:00:00`).toLocaleDateString("fr-FR")}</p></div>
+            <div><p className="text-xs font-bold text-muted-foreground">Paiement</p><p className="font-extrabold">{onCredit ? `À crédit${contactPhone.trim() ? ` · ${contactPhone.trim()}` : ""}` : "Payé"}</p></div>
           </section>
           <Button variant="outline" className="h-14 w-full rounded-2xl text-base font-extrabold" onClick={() => setReviewing(false)}>
             <Pencil className="size-5" /> Modifier
@@ -158,6 +164,7 @@ function ManualEntry() {
             <label className="block"><span className="text-sm font-bold text-muted-foreground">Client / fournisseur</span><input value={merchant} onChange={(event) => setMerchant(event.target.value)} maxLength={80} placeholder="Nom (facultatif)" className="mt-2 w-full rounded-2xl bg-muted px-4 py-3 font-bold outline-none" /></label>
             <label className="block"><span className="text-sm font-bold text-muted-foreground">Date</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="mt-2 w-full rounded-2xl bg-muted px-4 py-3 font-bold outline-none" /></label>
           </section>
+          <CreditFields kind={kind} onCredit={onCredit} setOnCredit={setOnCredit} phone={contactPhone} setPhone={setContactPhone} />
           <BigButton onClick={review}>Vérifier avant de valider</BigButton>
         </>
       )}
