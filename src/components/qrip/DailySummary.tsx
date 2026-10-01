@@ -19,7 +19,7 @@ const clean = (s: string) => s.replace(/[\u202f\u00a0]/g, " ");
 export function DailySummary({ invoices, business, currency, open, onOpenChange }: {
   invoices: Row[];
   business: string;
-  currency?: string;
+  currency?: string | undefined;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {

@@ -43,7 +43,10 @@ function Carnet() {
   async function settle(row: CreditRow) {
     if (!confirm(`Marquer ${formatMoney(Number(row.amount), currency)} comme soldé ?`)) return;
     const { error } = await supabase.from("invoices").update({ settled_at: new Date().toISOString() }).eq("id", row.id);
-    if (error) return toast.error("Impossible de solder pour le moment.");
+    if (error) {
+      toast.error("Impossible de solder pour le moment.");
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["invoices"] });
     toast.success("Crédit soldé, trésorerie mise à jour");
   }
