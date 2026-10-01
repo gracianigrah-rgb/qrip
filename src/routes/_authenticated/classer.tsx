@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, FileText, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
+import { CreditFields } from "@/components/qrip/CreditFields";
 import { clearPendingDocument, getPendingDocument, PENDING_KIND_KEY, type PendingDocument } from "@/lib/pending-invoice";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeInvoice, type InvoiceSuggestion } from "@/lib/invoice-ai.functions";
@@ -43,6 +44,8 @@ function Classer() {
   const [merchant, setMerchant] = useState("");
   const [date, setDate] = useState(todayISO());
   const [saving, setSaving] = useState(false);
+  const [onCredit, setOnCredit] = useState(false);
+  const [contactPhone, setContactPhone] = useState("");
 
   useEffect(() => {
     getPendingDocument().then((stored) => {
@@ -107,6 +110,8 @@ function Classer() {
         image_path: imagePath,
         ai_kind: suggestion?.kind ?? null,
         ai_confidence: suggestion?.confidence ?? null,
+        on_credit: onCredit,
+        contact_phone: onCredit ? contactPhone.trim() || null : null,
       });
       if (error) throw error;
 
@@ -223,6 +228,7 @@ function Classer() {
           />
         </label>
       </div>
+      <CreditFields kind={kind} onCredit={onCredit} setOnCredit={setOnCredit} phone={contactPhone} setPhone={setContactPhone} />
     </Screen>
   );
 }
