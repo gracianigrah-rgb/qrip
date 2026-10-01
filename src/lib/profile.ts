@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { setDisplayCurrency } from "@/lib/qrip";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Profile = {
@@ -28,7 +29,10 @@ export async function fetchOrCreateProfile(): Promise<Profile | null> {
     .eq("id", user.id)
     .maybeSingle();
   if (error) throw error;
-  if (data) return data as Profile;
+  if (data) {
+    setDisplayCurrency((data as Profile).currency);
+    return data as Profile;
+  }
 
   const phone = `+${(user.email ?? "").replace(/^u/, "").split("@")[0]?.replace(/\D/g, "") ?? ""}`;
   const { data: created, error: insertError } = await supabase
