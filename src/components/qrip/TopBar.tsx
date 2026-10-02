@@ -1,15 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, Building2 } from "lucide-react";
+import { Bell, Building2, CloudOff } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import qripLogoAsset from "@/assets/qrip-logo.png.asset.json";
 import { getBusinessLogoUrl, useProfile } from "@/lib/profile";
 import { useMyNotifications } from "@/lib/admin";
+import { useAutoSync, useNetworkState } from "@/lib/offline";
 
 export function TopBar() {
   const { data: profile } = useProfile();
   const { data: notifications } = useMyNotifications();
   const [logo, setLogo] = useState<string | null>(null);
   const unread = (notifications ?? []).filter((n) => !n.read_at).length;
+  useAutoSync(useQueryClient());
+  const { online, pending } = useNetworkState();
 
   useEffect(() => {
     getBusinessLogoUrl(profile?.logo_path).then(setLogo).catch(() => setLogo(null));
@@ -17,7 +21,14 @@ export function TopBar() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 mx-auto flex h-[calc(3.75rem+env(safe-area-inset-top))] max-w-lg items-end justify-between gap-3 border-b border-border bg-card/95 px-5 pb-3 backdrop-blur-xl">
-      <img src={qripLogoAsset.url} alt="qrip" className="h-8 w-auto shrink-0" />
+      <div className="flex shrink-0 items-center gap-2">
+        <img src={qripLogoAsset.url} alt="qrip" className="h-8 w-auto shrink-0" />
+        {(!online || pending > 0) && (
+          <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-[10px] font-extrabold text-muted-foreground">
+            <CloudOff className="size-3" />{!online ? "Hors-ligne" : "Envoi…"}{pending > 0 ? ` · ${pending}` : ""}
+          </span>
+        )}
+      </div>
       <div className="flex min-w-0 items-center gap-2">
         <Link
           to="/notifications"
