@@ -42,8 +42,7 @@ export function TopBar() {
             </span>
           )}
         </Link>
-        <Link to="/profil" className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-extrabold">{profile?.business_name?.trim() || "Mon entreprise"}</span>
+        <Link to="/profil" aria-label="Profil entreprise" className="flex items-center">
           <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
             {logo ? <img src={logo} alt="Logo de l’entreprise" className="size-full object-contain" /> : <Building2 className="size-5 text-muted-foreground" />}
           </span>
