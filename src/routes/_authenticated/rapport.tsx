@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Download, FileSpreadsheet, Share2, Table2 } from "lucide-react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
@@ -28,8 +29,41 @@ export const Route = createFileRoute("/_authenticated/rapport")({
   component: Rapport,
 });
 
+const PERIODS = [
+  { id: "all", label: "Tout" },
+  { id: "7d", label: "7 jours" },
+  { id: "month", label: "Ce mois" },
+  { id: "lastmonth", label: "Mois dernier" },
+  { id: "year", label: "Cette année" },
+] as const;
+const KINDS = [
+  { id: "all", label: "Tout" },
+  { id: "vente", label: "Ventes" },
+  { id: "achat", label: "Achats" },
+] as const;
+
+function inPeriod(date: string, period: string) {
+  if (period === "all") return true;
+  const now = new Date();
+  const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  if (period === "7d") {
+    const from = new Date(now);
+    from.setDate(now.getDate() - 6);
+    return date >= ymd(from);
+  }
+  if (period === "month") return date.slice(0, 7) === ymd(now).slice(0, 7);
+  if (period === "lastmonth") return date.slice(0, 7) === ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1)).slice(0, 7);
+  if (period === "year") return date.slice(0, 4) === String(now.getFullYear());
+  return true;
+}
+
 function Rapport() {
-  const { data: invoices = [], isLoading } = useInvoices();
+  const { data: allInvoices = [], isLoading } = useInvoices();
+  const [period, setPeriod] = useState<string>("all");
+  const [kind, setKind] = useState<string>("all");
+  const invoices = allInvoices.filter((i) => inPeriod(i.invoice_date, period) && (kind === "all" || i.kind === kind));
+  const periodLabel = PERIODS.find((p) => p.id === period)?.label ?? "Tout";
+  const kindLabel = KINDS.find((k) => k.id === kind)?.label ?? "Tout";
   const { data: profile } = useProfile();
   const businessName = profile?.business_name?.trim() || "Mon entreprise";
   const location = [profile?.neighborhood, profile?.city, profile?.country].filter(Boolean).join(", ");
@@ -59,6 +93,7 @@ function Rapport() {
       ["Entreprise", businessName],
       ["Téléphone", businessPhone],
       ["Localisation", location || "Non renseignée"],
+      ["Filtre", `${periodLabel} · ${kindLabel}`],
     ];
   }
 
@@ -67,6 +102,7 @@ function Rapport() {
       `Rapport d'activité — ${businessName}`,
       `Téléphone : ${businessPhone}`,
       `Localisation : ${location || "Non renseignée"}`,
+      `Période : ${periodLabel} · ${kindLabel}`,
       ...lignes.map((l) => `${l.label} : ${l.value}`),
     ].join("\n");
   }
@@ -156,7 +192,7 @@ function Rapport() {
     pdf.setFontSize(9);
     pdf.text(pdfText(`Telephone : ${businessPhone}`), 20, 51);
     pdf.text(pdfText(`Localisation : ${location || "Non renseignee"}`), 20, 57, { maxWidth: 170 });
-    pdf.text(`Genere le ${new Date().toLocaleDateString("fr-FR")}`, 20, 63);
+    pdf.text(pdfText(`Genere le ${new Date().toLocaleDateString("fr-FR")} · Filtre : ${periodLabel} / ${kindLabel}`), 20, 63);
     lignes.forEach((ligne, index) => {
       const y = 78 + index * 12;
       pdf.setFont("helvetica", "normal");
@@ -245,6 +281,22 @@ function Rapport() {
         </BigButton>
       }
     >
+      <section className="space-y-2">
+        {[{ items: PERIODS, value: period, set: setPeriod }, { items: KINDS, value: kind, set: setKind }].map((g, gi) => (
+          <div key={gi} className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {g.items.map((it) => (
+              <button
+                key={it.id}
+                onClick={() => g.set(it.id)}
+                className={`press shrink-0 rounded-full px-4 py-2 text-sm font-extrabold active:press-active ${g.value === it.id ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground soft-shadow"}`}
+              >
+                {it.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </section>
+
       <section className="rounded-4xl bg-gradient-teal p-6 card-pop">
         <div className="flex items-start justify-between gap-4">
           <p className="shrink-0 text-sm font-bold text-teal-foreground/80">Résultat net</p>
