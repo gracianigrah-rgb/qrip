@@ -3,6 +3,7 @@ import { FileDown, MessageCircle, Moon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/qrip";
 import { isOpenCredit, whatsappUrl } from "@/lib/credit";
+import { setDailyGoal, useDailyGoal } from "@/lib/offline";
 
 type Row = { kind: "achat" | "vente"; amount: number; invoice_date: string; on_credit: boolean; settled_at: string | null; merchant: string | null; note: string | null };
 
@@ -33,6 +34,8 @@ export function DailySummary({ invoices, business, currency, open, onOpenChange 
   const depenses = sum(achats);
   const net = sum(ventes) - depenses;
   const m = (v: number) => formatMoney(v, currency);
+  const goal = useDailyGoal();
+  const pct = goal ? Math.min(100, Math.round((sum(ventes) / goal) * 100)) : 0;
   const dateLabel = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
   const lines = [
@@ -83,6 +86,18 @@ export function DailySummary({ invoices, business, currency, open, onOpenChange 
         <div className="rounded-3xl bg-gradient-teal p-5 text-center">
           <p className="text-sm font-bold text-teal-foreground/80">Bénéfice du jour</p>
           <p className="text-4xl font-extrabold text-teal-foreground">{m(net)}</p>
+        </div>
+        <div className="rounded-2xl bg-muted p-3">
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="goal" className="text-sm font-extrabold">Objectif du jour</label>
+            <input id="goal" inputMode="numeric" value={goal ? String(goal) : ""} placeholder="0"
+              onChange={(e) => setDailyGoal(Number(e.target.value.replace(/\D/g, "")) || 0)}
+              className="w-32 rounded-xl bg-card px-3 py-1.5 text-right font-extrabold outline-none" />
+          </div>
+          <div className="mt-2 h-3 overflow-hidden rounded-full bg-card">
+            <div className="h-full rounded-full bg-gradient-flame transition-all duration-700" style={{ width: `${pct}%` }} />
+          </div>
+          <p className="mt-1 text-xs font-bold text-muted-foreground">{goal ? `${m(sum(ventes))} / ${m(goal)} · ${pct} %${pct >= 100 ? " 🎉" : ""}` : "Fixez vos ventes à atteindre aujourd'hui"}</p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="rounded-2xl bg-muted p-3"><p className="font-bold text-muted-foreground">Ventes ({ventes.length})</p><p className="text-lg font-extrabold">{m(sum(ventes))}</p></div>

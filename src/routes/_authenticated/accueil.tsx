@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, BookOpen, Building2, ChevronRight, Moon } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BookOpen, Building2, ChevronRight, Moon, Target } from "lucide-react";
+import { getCachedInvoices, pendingRows, setCachedInvoices, useDailyGoal } from "@/lib/offline";
 import { DailySummary, useEveningTrigger } from "@/components/qrip/DailySummary";
 import { isOpenCredit } from "@/lib/credit";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -51,16 +52,41 @@ export const Route = createFileRoute("/_authenticated/accueil")({
 export function useInvoices() {
   return useQuery({
     queryKey: ["invoices"],
+    networkMode: "always",
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("*")
-        .order("invoice_date", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      let rows: any[] = getCachedInvoices() ?? [];
+      if (navigator.onLine) {
+        const { data, error } = await supabase
+          .from("invoices")
+          .select("*")
+          .order("invoice_date", { ascending: false })
+          .order("created_at", { ascending: false });
+        if (!error && data) { rows = data; setCachedInvoices(data); }
+        else if (!getCachedInvoices()) throw error;
+      }
+      const pending = pendingRows().filter((p) => !rows.some((r) => r.id === p.id));
+      return [...pending, ...rows].sort((a, b) => b.invoice_date.localeCompare(a.invoice_date)) as typeof rows;
     },
   });
+}
+
+function GoalProgress({ done, currency, onEdit }: { done: number; currency?: string | undefined; onEdit: () => void }) {
+  const goal = useDailyGoal();
+  const pct = goal ? Math.min(100, Math.round((done / goal) * 100)) : 0;
+  return (
+    <button type="button" onClick={onEdit} className="press w-full rounded-3xl bg-card p-4 text-left soft-shadow">
+      <div className="flex items-center justify-between">
+        <p className="flex items-center gap-1 text-sm font-extrabold"><Target className="size-4 text-primary" /> Objectif du jour</p>
+        <p className="text-sm font-extrabold text-teal-deep">{goal ? `${pct} %` : "Définir"}</p>
+      </div>
+      <div className="mt-2 h-3 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-gradient-flame transition-all duration-700" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mt-1 text-xs font-bold text-muted-foreground">
+        {goal ? `${formatMoney(done, currency)} / ${formatMoney(goal, currency)}${pct >= 100 ? " · Objectif atteint 🎉" : ""}` : "Fixez un montant de ventes à atteindre aujourd'hui"}
+      </p>
+    </button>
+  );
 }
 
 function Accueil() {
@@ -184,6 +210,7 @@ function Accueil() {
           <span><span className="block text-lg font-extrabold leading-tight">Bilan du soir</span><span className="text-xs font-bold opacity-80">Ma caisse du jour en PDF ou WhatsApp</span></span>
         </button>
       </div>
+      <GoalProgress done={invoices.filter((i) => i.kind === "vente" && i.invoice_date === todayKey).reduce((s, i) => s + Number(i.amount), 0)} currency={currency} onEdit={() => setBilanOpen(true)} />
       <DailySummary invoices={invoices} business={businessName} currency={currency} open={bilanOpen} onOpenChange={setBilanOpen} />
 
       <section className="rounded-3xl bg-card p-5 soft-shadow">

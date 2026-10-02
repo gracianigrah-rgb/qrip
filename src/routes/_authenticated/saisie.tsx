@@ -1,3 +1,4 @@
+import { currentUserId, saveInvoice } from "@/lib/offline";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowDownLeft, ArrowUpRight, Check, Mic, Pencil } from "lucide-react";
@@ -95,10 +96,9 @@ function ManualEntry() {
   async function save() {
     setSaving(true);
     try {
-      const { data, error: userError } = await supabase.auth.getUser();
-      const userId = data.user?.id;
-      if (userError || !userId) throw userError ?? new Error("Session introuvable");
-      const { error } = await supabase.from("invoices").insert({
+      const userId = await currentUserId();
+      if (!userId) throw new Error("Session introuvable");
+      const queued = await saveInvoice({
         user_id: userId,
         kind,
         amount: parsedAmount,
@@ -108,10 +108,8 @@ function ManualEntry() {
         category,
         on_credit: onCredit,
         contact_phone: onCredit ? contactPhone.trim() || null : null,
-      });
-      if (error) throw error;
-      await queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success(kind === "vente" ? "Vente enregistrée" : "Achat enregistré");
+      }, queryClient);
+      toast.success(queued ? "Enregistré hors-ligne, envoi dès le retour du réseau" : kind === "vente" ? "Vente enregistrée" : "Achat enregistré");
       navigate({ to: "/accueil", replace: true });
     } catch {
       toast.error("L’opération n’a pas pu être enregistrée.");
