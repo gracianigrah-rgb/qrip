@@ -86,22 +86,23 @@ function Classer() {
 
     setSaving(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
+      const userId = await currentUserId();
       if (!userId) throw new Error("no session");
 
       let imagePath: string | null = null;
-      if (document) {
-        const blob = await (await fetch(document.dataUrl)).blob();
-        const extension = document.mimeType === "application/pdf" ? "pdf" : "jpg";
-        const path = `${userId}/${Date.now()}.${extension}`;
-        const { error: upErr } = await supabase.storage
-          .from("factures")
-          .upload(path, blob, { contentType: document.mimeType });
-        if (!upErr) imagePath = path;
+      if (document && navigator.onLine) {
+        try {
+          const blob = await (await fetch(document.dataUrl)).blob();
+          const extension = document.mimeType === "application/pdf" ? "pdf" : "jpg";
+          const path = `${userId}/${Date.now()}.${extension}`;
+          const { error: upErr } = await supabase.storage
+            .from("factures")
+            .upload(path, blob, { contentType: document.mimeType });
+          if (!upErr) imagePath = path;
+        } catch { /* offline: keep the operation without the photo */ }
       }
 
-      const { error } = await supabase.from("invoices").insert({
+      const queued = await saveInvoice({
         user_id: userId,
         kind,
         amount: value,
@@ -112,12 +113,10 @@ function Classer() {
         ai_confidence: suggestion?.confidence ?? null,
         on_credit: onCredit,
         contact_phone: onCredit ? contactPhone.trim() || null : null,
-      });
-      if (error) throw error;
+      }, queryClient);
 
       await clearPendingDocument();
-      await queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      toast.success(kind === "vente" ? "Vente enregistrée 🎉" : "Achat enregistré ✅");
+      toast.success(queued ? "Enregistré hors-ligne, envoi dès le retour du réseau" : kind === "vente" ? "Vente enregistrée 🎉" : "Achat enregistré ✅");
       navigate({ to: "/accueil", replace: true });
     } catch {
       toast.error("Enregistrement impossible. Réessayez.");
