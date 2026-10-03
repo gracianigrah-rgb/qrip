@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, BookOpen, Building2, ChevronRight, Moon, Target } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BookOpen, Building2, ChevronRight, Landmark, Moon, Target } from "lucide-react";
 import { getCachedInvoices, pendingRows, setCachedInvoices, useDailyGoal } from "@/lib/offline";
 import { DailySummary, useEveningTrigger } from "@/components/qrip/DailySummary";
 import { isOpenCredit } from "@/lib/credit";
@@ -210,6 +210,11 @@ function Accueil() {
           <span><span className="block text-lg font-extrabold leading-tight">Bilan du soir</span><span className="text-xs font-bold opacity-80">Ma caisse du jour en PDF ou WhatsApp</span></span>
         </button>
       </div>
+      <Link to="/financement" className="press flex items-center gap-3 rounded-3xl bg-gradient-teal p-4 text-teal-foreground card-pop active:press-active">
+        <Landmark className="size-8" />
+        <span className="flex-1"><span className="block text-lg font-extrabold leading-tight">Obtenir un micro-crédit</span><span className="text-xs font-bold opacity-80">Mon score de santé financière</span></span>
+        <ChevronRight className="size-5" />
+      </Link>
       <GoalProgress done={invoices.filter((i) => i.kind === "vente" && i.invoice_date === todayKey).reduce((s, i) => s + Number(i.amount), 0)} currency={currency} onEdit={() => setBilanOpen(true)} />
       <DailySummary invoices={invoices} business={businessName} currency={currency} open={bilanOpen} onOpenChange={setBilanOpen} />
 
