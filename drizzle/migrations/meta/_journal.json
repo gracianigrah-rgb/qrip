@@ -43,6 +43,13 @@
       "when": 1790897925784,
       "tag": "0005_credit_book",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791013171668,
+      "tag": "0006_loan_requests",
+      "breakpoints": true
     }
   ]
 }
