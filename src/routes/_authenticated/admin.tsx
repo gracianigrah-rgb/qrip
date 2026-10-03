@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/lib/admin";
 import { formatMoney } from "@/lib/qrip";
+import { LOAN_STATUS } from "@/lib/finance-score";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type Tab = "users" | "ops" | "notif";
+type Tab = "users" | "ops" | "loans" | "notif";
 const input = "w-full rounded-2xl bg-muted px-4 py-3 font-bold outline-none";
 
 function AdminPage() {
@@ -42,13 +43,14 @@ function AdminPage() {
 
   return (
     <Screen title="Administration" back="/profil" className="space-y-4">
-      <div className="grid grid-cols-3 gap-2 rounded-3xl bg-card p-1.5 soft-shadow">
-        {([["users", "Utilisateurs"], ["ops", "Opérations"], ["notif", "Notifier"]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} className={`rounded-2xl py-2.5 text-sm font-extrabold ${tab === k ? "bg-gradient-sun text-sun-foreground" : "text-muted-foreground"}`}>{l}</button>
+      <div className="grid grid-cols-4 gap-1 rounded-3xl bg-card p-1.5 soft-shadow">
+        {([["users", "Utilisateurs"], ["ops", "Opérations"], ["loans", "Crédits"], ["notif", "Notifier"]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`rounded-2xl py-2.5 text-xs font-extrabold ${tab === k ? "bg-gradient-sun text-sun-foreground" : "text-muted-foreground"}`}>{l}</button>
         ))}
       </div>
       {tab === "users" && <UsersTab />}
       {tab === "ops" && <OpsTab />}
+      {tab === "loans" && <LoansTab />}
       {tab === "notif" && <NotifyTab />}
     </Screen>
   );
@@ -229,6 +231,86 @@ function NotifyTab() {
       <BigButton tone="flame" disabled={sending} onClick={send}>
         <span className="inline-flex items-center gap-2"><Send className="size-5" /> {sending ? "Envoi…" : "Envoyer"}</span>
       </BigButton>
+    </section>
+  );
+}
+
+type AdminLoan = { id: string; user_id: string; amount: number; purpose: string; duration_months: number; score: number; monthly_revenue: number; status: string; partner: string | null; commission: number; admin_note: string | null; created_at: string };
+
+function LoansTab() {
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["admin-loans"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("loan_requests").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as AdminLoan[];
+    },
+  });
+  const { data: profiles } = useQuery({
+    queryKey: ["admin-profiles"],
+    queryFn: async () => (await supabase.from("profiles").select("id, phone, business_name, owner_name, city, country, currency, created_at")).data as AdminProfile[],
+  });
+  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const list = data ?? [];
+  const totalCommission = list.reduce((s, l) => s + Number(l.commission), 0);
+  const disbursed = list.filter((l) => l.status === "decaisse").reduce((s, l) => s + Number(l.amount), 0);
+
+  async function update(l: AdminLoan, patch: Partial<AdminLoan>) {
+    const { error } = await supabase.from("loan_requests").update(patch).eq("id", l.id);
+    if (error) { toast.error("Modification impossible."); return; }
+    qc.invalidateQueries({ queryKey: ["admin-loans"] });
+  }
+  function editDetails(l: AdminLoan) {
+    const partner = prompt("Partenaire microfinance", l.partner ?? "");
+    if (partner === null) return;
+    const c = prompt("Commission (montant)", String(l.commission));
+    if (c === null) return;
+    const commission = Number(c.replace(/\s/g, ""));
+    if (!Number.isFinite(commission) || commission < 0) { toast.error("Commission invalide."); return; }
+    const note = prompt("Note interne", l.admin_note ?? "");
+    update(l, { partner: partner.trim() || null, commission, admin_note: note?.trim() || null });
+  }
+  async function remove(l: AdminLoan) {
+    if (!confirm("Supprimer cette demande ?")) return;
+    const { error } = await supabase.from("loan_requests").delete().eq("id", l.id);
+    if (error) { toast.error("Suppression impossible."); return; }
+    qc.invalidateQueries({ queryKey: ["admin-loans"] });
+  }
+
+  return (
+    <section className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-3xl bg-card p-4 soft-shadow"><p className="text-xs font-bold text-muted-foreground">Décaissé</p><p className="font-extrabold">{formatMoney(disbursed)}</p></div>
+        <div className="rounded-3xl bg-card p-4 soft-shadow"><p className="text-xs font-bold text-muted-foreground">Commissions</p><p className="font-extrabold text-teal-deep">{formatMoney(totalCommission)}</p></div>
+      </div>
+      {list.length === 0 && <p className="rounded-3xl bg-card p-5 font-bold soft-shadow">Aucune demande pour le moment.</p>}
+      {list.map((l) => {
+        const p = byId.get(l.user_id);
+        return (
+          <div key={l.id} className="space-y-2 rounded-3xl bg-card p-4 soft-shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-extrabold">{p?.business_name || p?.phone || "Utilisateur"}</p>
+                <p className="text-xs font-bold text-muted-foreground">{p?.owner_name ?? ""} · {p?.phone ?? ""} · {[p?.city, p?.country].filter(Boolean).join(", ")}</p>
+              </div>
+              <span className="rounded-full bg-muted px-2 py-1 text-xs font-extrabold">Score {l.score}</span>
+            </div>
+            <p className="text-sm font-bold">{formatMoney(Number(l.amount))} · {l.purpose} · {l.duration_months} mois</p>
+            <p className="text-xs font-bold text-muted-foreground">Ventes/mois : {formatMoney(Number(l.monthly_revenue))} · {new Date(l.created_at).toLocaleDateString("fr-FR")}</p>
+            {(l.partner || l.admin_note || Number(l.commission) > 0) && (
+              <p className="text-xs font-bold">{l.partner ? `Partenaire : ${l.partner}` : ""} {Number(l.commission) > 0 ? `· Commission ${formatMoney(Number(l.commission))}` : ""} {l.admin_note ? `· ${l.admin_note}` : ""}</p>
+            )}
+            <div className="flex items-center gap-2">
+              <select className="flex-1 rounded-2xl bg-muted px-3 py-2 text-sm font-bold" value={l.status} onChange={(e) => update(l, { status: e.target.value })}>
+                {Object.entries(LOAN_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+              <Button size="icon" variant="ghost" onClick={() => editDetails(l)} aria-label="Modifier"><Pencil className="size-4" /></Button>
+              <Button size="icon" variant="ghost" onClick={() => remove(l)} aria-label="Supprimer"><Trash2 className="size-4" /></Button>
+            </div>
+          </div>
+        );
+      })}
     </section>
   );
 }
