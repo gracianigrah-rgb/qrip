@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CodeRouteImport } from './routes/code'
+import { Route as VerifierRouteImport } from './routes/verifier'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCaptureRouteImport } from './routes/_authenticated/capture'
@@ -41,6 +42,11 @@ const AuthRoute = AuthRouteImport.update({
 const CodeRoute = CodeRouteImport.update({
   id: '/code',
   path: '/code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifierRoute = VerifierRouteImport.update({
+  id: '/verifier',
+  path: '/verifier',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccueilRoute = AuthenticatedAccueilRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/code': typeof CodeRoute
+  '/verifier': typeof VerifierRoute
   '/accueil': typeof AuthenticatedAccueilRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/capture': typeof AuthenticatedCaptureRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/code': typeof CodeRoute
+  '/verifier': typeof VerifierRoute
   '/accueil': typeof AuthenticatedAccueilRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/capture': typeof AuthenticatedCaptureRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/code': typeof CodeRoute
+  '/verifier': typeof VerifierRoute
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/capture': typeof AuthenticatedCaptureRoute
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/code'
+    | '/verifier'
     | '/accueil'
     | '/admin'
     | '/capture'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/code'
+    | '/verifier'
     | '/accueil'
     | '/admin'
     | '/capture'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/code'
+    | '/verifier'
     | '/_authenticated/accueil'
     | '/_authenticated/admin'
     | '/_authenticated/capture'
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CodeRoute: typeof CodeRoute
+  VerifierRoute: typeof VerifierRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/code'
       fullPath: '/code'
       preLoaderRoute: typeof CodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verifier': {
+      id: '/verifier'
+      path: '/verifier'
+      fullPath: '/verifier'
+      preLoaderRoute: typeof VerifierRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/accueil': {
@@ -336,6 +356,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CodeRoute: CodeRoute,
+  VerifierRoute: VerifierRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
