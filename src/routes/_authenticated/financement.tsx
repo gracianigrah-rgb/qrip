@@ -40,7 +40,7 @@ function Financement() {
   const currency = profile?.currency;
   const s = computeScore(invoices as any);
   const [amount, setAmount] = useState(250000);
-  const [purpose, setPurpose] = useState(PURPOSES[0]);
+  const [purpose, setPurpose] = useState<string>("Achat de stock");
   const [duration, setDuration] = useState(6);
   const [sending, setSending] = useState(false);
 
