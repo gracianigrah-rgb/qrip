@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/verifier")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({ c: typeof s.c === "string" ? s.c : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({ c: typeof s["c"] === "string" ? s["c"] : "" }),
   head: () => ({
     meta: [
       { title: "Vérifier un document — qrip" },
