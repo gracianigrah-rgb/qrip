@@ -50,6 +50,13 @@
       "when": 1791013188054,
       "tag": "0006_loan_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791109517948,
+      "tag": "0007_subscriptions_payments_qr",
+      "breakpoints": true
     }
   ]
 }

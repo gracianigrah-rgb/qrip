@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_settings: {
+        Row: {
+          currency: string
+          id: number
+          instructions: string | null
+          monthly_price: number
+          payment_link: string | null
+          payment_number: string | null
+          updated_at: string
+          yearly_price: number
+        }
+        Insert: {
+          currency?: string
+          id?: number
+          instructions?: string | null
+          monthly_price?: number
+          payment_link?: string | null
+          payment_number?: string | null
+          updated_at?: string
+          yearly_price?: number
+        }
+        Update: {
+          currency?: string
+          id?: number
+          instructions?: string | null
+          monthly_price?: number
+          payment_link?: string | null
+          payment_number?: string | null
+          updated_at?: string
+          yearly_price?: number
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           ai_confidence: number | null
@@ -185,6 +218,57 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_payments: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          id: string
+          payer_ref: string | null
+          period_end: string | null
+          period_start: string | null
+          plan: string
+          proof_path: string | null
+          receipt_no: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          payer_ref?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan: string
+          proof_path?: string | null
+          receipt_no?: string | null
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          payer_ref?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan?: string
+          proof_path?: string | null
+          receipt_no?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -216,6 +300,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      review_payment: {
+        Args: { _approve: boolean; _id: string; _note?: string }
+        Returns: undefined
+      }
       send_notification: {
         Args: {
           _body: string
@@ -226,6 +314,17 @@ export type Database = {
           _title: string
         }
         Returns: number
+      }
+      verify_certificate: {
+        Args: { _code: string }
+        Returns: {
+          business_name: string
+          city: string
+          country: string
+          issued_at: string
+          kind: string
+          score: number
+        }[]
       }
     }
     Enums: {
