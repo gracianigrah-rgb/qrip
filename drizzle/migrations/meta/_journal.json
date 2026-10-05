@@ -57,6 +57,13 @@
       "when": 1791109517948,
       "tag": "0007_subscriptions_payments_qr",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791165632100,
+      "tag": "0008_daily_export_payment",
+      "breakpoints": true
     }
   ]
 }

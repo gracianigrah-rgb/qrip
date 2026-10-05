@@ -17,6 +17,7 @@ export type Database = {
       billing_settings: {
         Row: {
           currency: string
+          daily_export_price: number
           id: number
           instructions: string | null
           monthly_price: number
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           currency?: string
+          daily_export_price?: number
           id?: number
           instructions?: string | null
           monthly_price?: number
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           currency?: string
+          daily_export_price?: number
           id?: number
           instructions?: string | null
           monthly_price?: number
@@ -44,6 +47,30 @@ export type Database = {
           payment_number?: string | null
           updated_at?: string
           yearly_price?: number
+        }
+        Relationships: []
+      }
+      export_history: {
+        Row: {
+          created_at: string
+          format: string
+          id: string
+          label: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          format: string
+          id?: string
+          label: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          format?: string
+          id?: string
+          label?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -225,6 +252,7 @@ export type Database = {
           confirmed_at: string | null
           created_at: string
           currency: string
+          export_date: string | null
           id: string
           payer_ref: string | null
           period_end: string | null
@@ -241,6 +269,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           currency?: string
+          export_date?: string | null
           id?: string
           payer_ref?: string | null
           period_end?: string | null
@@ -257,6 +286,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           currency?: string
+          export_date?: string | null
           id?: string
           payer_ref?: string | null
           period_end?: string | null

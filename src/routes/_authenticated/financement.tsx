@@ -11,6 +11,7 @@ import { getBusinessLogoUrl, useProfile } from "@/lib/profile";
 import { computeScore, certNumber, LOAN_STATUS } from "@/lib/finance-score";
 import { isOpenCredit } from "@/lib/credit";
 import { cn } from "@/lib/utils";
+import { qrDataUrl, verifyUrl } from "@/lib/subscription";
 
 export const Route = createFileRoute("/_authenticated/financement")({
   ssr: false,
@@ -74,7 +75,7 @@ function Financement() {
     const t = (v: string) => v.replace(/[\u00a0\u202f]/g, " ");
     const name = profile?.business_name?.trim() || "Mon entreprise";
     const loc = [profile?.neighborhood, profile?.city, profile?.country].filter(Boolean).join(", ") || "Non renseignée";
-    const ref = loans[0] ? certNumber(loans[0].id) : `QRIP-${Date.now().toString(36).toUpperCase()}`;
+    const ref = loans[0] ? certNumber(loans[0].id) : certNumber(profile?.id ?? crypto.randomUUID());
     try {
       if (profile?.logo_path) {
         const url = await getBusinessLogoUrl(profile.logo_path);
@@ -128,10 +129,13 @@ function Financement() {
     pdf.text(t(`Créances clients en cours : ${formatMoney(owed, currency)}`), 20, y); y += 7;
     pdf.text(t(`Dettes fournisseurs en cours : ${formatMoney(owe, currency)}`), 20, y); y += 14;
 
-    pdf.setDrawColor(255, 107, 26); pdf.setLineWidth(0.8); pdf.roundedRect(20, y, 170, 22, 3, 3);
-    pdf.setFont("helvetica", "bold"); pdf.text(t(`Certifié par qrip · N° ${ref}`), 26, y + 9);
+    if (y > 240) { pdf.addPage(); y = 20; }
+    pdf.setDrawColor(255, 107, 26); pdf.setLineWidth(0.8); pdf.roundedRect(20, y, 170, 34, 3, 3);
+    try { pdf.addImage(await qrDataUrl(verifyUrl(ref)), "PNG", 158, y + 3, 28, 28); } catch { /* QR optionnel */ }
+    pdf.setFont("helvetica", "bold"); pdf.text(t(`Certifié par qrip · N° ${ref}`), 26, y + 10);
     pdf.setFont("helvetica", "normal"); pdf.setFontSize(9);
-    pdf.text(t(`Établi le ${new Date().toLocaleDateString("fr-FR")} à partir des opérations enregistrées par le commerçant.`), 26, y + 16, { maxWidth: 160 });
+    pdf.text(t(`Établi le ${new Date().toLocaleDateString("fr-FR")} à partir des opérations enregistrées par le commerçant.`), 26, y + 17, { maxWidth: 125 });
+    pdf.text(t("Scannez le QR code pour vérifier l'authenticité."), 26, y + 28);
     pdf.save(`dossier-financier-${ref}.pdf`);
     toast.success("Dossier téléchargé.");
   }

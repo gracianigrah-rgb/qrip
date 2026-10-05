@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/qrip";
 export type Billing = {
   monthly_price: number;
   yearly_price: number;
+  daily_export_price: number;
   currency: string;
   payment_number: string | null;
   payment_link: string | null;
@@ -14,7 +15,8 @@ export type Billing = {
 export type Payment = {
   id: string;
   user_id: string;
-  plan: "mensuel" | "annuel";
+  plan: "mensuel" | "annuel" | "bilan_jour";
+  export_date: string | null;
   amount: number;
   currency: string;
   proof_path: string | null;
@@ -60,7 +62,7 @@ export function useMyPayments() {
 export type SubState = "active" | "expiring" | "expired" | "none";
 
 export function subscriptionState(payments: Payment[] = []) {
-  const ends = payments.filter((p) => p.status === "confirme" && p.period_end).map((p) => new Date(p.period_end!).getTime());
+  const ends = payments.filter((p) => p.status === "confirme" && p.plan !== "bilan_jour" && p.period_end).map((p) => new Date(p.period_end!).getTime());
   const end = ends.length ? Math.max(...ends) : null;
   const pending = payments.some((p) => p.status === "en_attente");
   if (!end) return { state: "none" as SubState, end: null, daysLeft: 0, pending };
@@ -75,6 +77,36 @@ export function useSubscription() {
 }
 
 export const canExport = (s: SubState) => s === "active" || s === "expiring";
+
+export const PLAN_LABEL: Record<string, string> = { mensuel: "Mensuel", annuel: "Annuel", bilan_jour: "Export du bilan du jour" };
+
+export function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** One-off payment confirmed for today's evening summary export. */
+export const dailyUnlocked = (payments: Payment[] = [], date = todayISO()) =>
+  payments.some((p) => p.plan === "bilan_jour" && p.status === "confirme" && p.export_date === date);
+
+export type ExportLog = { id: string; format: string; label: string; created_at: string };
+
+export function useExportHistory() {
+  return useQuery({
+    queryKey: ["exports"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("export_history").select("id, format, label, created_at").order("created_at", { ascending: false }).limit(100);
+      if (error) throw error;
+      return data as ExportLog[];
+    },
+  });
+}
+
+export async function logExport(format: string, label: string) {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return;
+  await supabase.from("export_history").insert({ user_id: u.user.id, format, label });
+}
 
 export async function qrDataUrl(text: string) {
   const QR = await import("qrcode");
@@ -100,11 +132,11 @@ export async function downloadReceipt(p: Payment, business: string, owner?: stri
     ["Client", business],
     ["Proprietaire", owner || "—"],
     ["Telephone", phone || "—"],
-    ["Abonnement", p.plan === "annuel" ? "Annuel" : "Mensuel"],
+    ["Objet", PLAN_LABEL[p.plan] ?? p.plan],
     ["Montant paye", formatMoney(Number(p.amount), p.currency)],
     ["Reference du paiement", p.payer_ref || "—"],
     ["Date de confirmation", d(p.confirmed_at)],
-    ["Periode couverte", `${d(p.period_start)} au ${d(p.period_end)}`],
+    p.plan === "bilan_jour" ? ["Bilan concerne", d(p.export_date)] : ["Periode couverte", `${d(p.period_start)} au ${d(p.period_end)}`],
   ];
   rows.forEach(([l, v], i) => { pdf.text(t(l), 20, 58 + i * 9); pdf.setFont("helvetica", "bold"); pdf.text(t(v), 190, 58 + i * 9, { align: "right" }); pdf.setFont("helvetica", "normal"); });
   if (p.receipt_no) {

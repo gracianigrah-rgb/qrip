@@ -1,12 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Download, FileSpreadsheet, Share2, Table2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Clock, Download, FileSpreadsheet, MessageCircle, Receipt, Table2 } from "lucide-react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
 import { useInvoices } from "@/routes/_authenticated/accueil";
 import { formatMoney } from "@/lib/qrip";
 import { getBusinessLogoUrl, useProfile } from "@/lib/profile";
 import qripLogoAsset from "@/assets/qrip-logo.png.asset.json";
+import { whatsappUrl } from "@/lib/credit";
+import { PaymentDialog } from "@/components/qrip/PaymentDialog";
+import { canExport, downloadReceipt, logExport, PAY_STATUS, PLAN_LABEL, useBilling, useExportHistory, useSubscription, type Payment } from "@/lib/subscription";
 
 export const Route = createFileRoute("/_authenticated/rapport")({
   ssr: false,
@@ -58,6 +62,7 @@ function inPeriod(date: string, period: string) {
 }
 
 function Rapport() {
+  const qc = useQueryClient();
   const { data: allInvoices = [], isLoading } = useInvoices();
   const [period, setPeriod] = useState<string>("all");
   const [kind, setKind] = useState<string>("all");
@@ -125,23 +130,21 @@ function Rapport() {
     return url ? imageToDataUrl(url) : null;
   }
 
-  async function share() {
-    const text = shareText();
-    try {
-      if (navigator.share) {
-        const pdf = await buildPdf();
-        const file = new File([pdf], "rapport-qrip.pdf", { type: "application/pdf" });
-        const data = navigator.canShare?.({ files: [file] })
-          ? { title: `Rapport — ${businessName}`, text, files: [file] }
-          : { title: `Rapport — ${businessName}`, text };
-        await navigator.share(data);
-      } else {
-        await navigator.clipboard.writeText(text);
-        toast.success("Rapport copié, collez-le où vous voulez.");
-      }
-    } catch {
-      /* partage annulé */
-    }
+  function share() {
+    window.open(whatsappUrl(`${shareText()}\n\nEnvoyé avec qrip`), "_blank", "noopener");
+  }
+
+  const sub = useSubscription();
+  const { data: billing } = useBilling();
+  const { data: exportsLog = [] } = useExportHistory();
+  const [payPlan, setPayPlan] = useState<Payment["plan"] | null>(null);
+  const unlocked = canExport(sub.state);
+  const filterLabel = `${periodLabel} · ${kindLabel}`;
+  async function guarded(fmt: string, fn: () => unknown) {
+    if (!unlocked) { toast.error("Abonnez-vous pour exporter."); return; }
+    await fn();
+    await logExport(fmt, `Rapport · ${filterLabel}`);
+    qc.invalidateQueries({ queryKey: ["exports"] });
   }
 
   function downloadBlob(blob: Blob, filename: string) {
@@ -276,7 +279,7 @@ function Rapport() {
       footer={
         <BigButton onClick={share}>
           <span className="flex items-center justify-center gap-3">
-            <Share2 className="size-6" /> Partager mon rapport
+            <MessageCircle className="size-6" /> Partager sur WhatsApp (gratuit)
           </span>
         </BigButton>
       }
@@ -319,20 +322,70 @@ function Rapport() {
         ))}
       </section>
 
-      <section>
-        <h2 className="mb-3 text-lg font-extrabold">Exporter mes données</h2>
-        <div className="grid grid-cols-3 gap-3">
-          <BigButton tone="ghost" onClick={exportCsv} className="px-3 py-4 text-base">
-            <span className="flex items-center justify-center gap-2"><FileSpreadsheet className="size-5" /> CSV</span>
-          </BigButton>
-          <BigButton tone="ghost" onClick={exportPdf} className="px-3 py-4 text-base">
-            <span className="flex items-center justify-center gap-2"><Download className="size-5" /> PDF</span>
-          </BigButton>
-          <BigButton tone="ghost" onClick={exportExcel} className="px-2 py-4 text-base">
-            <span className="flex items-center justify-center gap-2"><Table2 className="size-5" /> Excel</span>
-          </BigButton>
+      {unlocked ? (
+        <section>
+          <h2 className="mb-1 text-lg font-extrabold">Exporter mes données</h2>
+          <p className="mb-3 text-sm font-bold text-success">Abonnement actif jusqu’au {sub.end?.toLocaleDateString("fr-FR")}</p>
+          <div className="grid grid-cols-3 gap-3">
+            <BigButton tone="ghost" onClick={() => guarded("CSV", exportCsv)} className="px-3 py-4 text-base">
+              <span className="flex items-center justify-center gap-2"><FileSpreadsheet className="size-5" /> CSV</span>
+            </BigButton>
+            <BigButton tone="ghost" onClick={() => guarded("PDF", exportPdf)} className="px-3 py-4 text-base">
+              <span className="flex items-center justify-center gap-2"><Download className="size-5" /> PDF</span>
+            </BigButton>
+            <BigButton tone="ghost" onClick={() => guarded("Excel", exportExcel)} className="px-2 py-4 text-base">
+              <span className="flex items-center justify-center gap-2"><Table2 className="size-5" /> Excel</span>
+            </BigButton>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-extrabold">{unlocked ? "Prolonger mon abonnement" : "Débloquer PDF, CSV et Excel"}</h2>
+        {sub.state === "expired" && <p className="rounded-2xl bg-destructive/10 p-3 text-sm font-bold text-destructive">Abonnement terminé : exportations bloquées.</p>}
+        {sub.pending && <p className="flex items-center gap-2 rounded-2xl bg-muted p-3 text-sm font-bold"><Clock className="size-4" /> Paiement en cours de vérification.</p>}
+        <div className="grid grid-cols-2 gap-3">
+          {(["mensuel", "annuel"] as const).map((p) => (
+            <button key={p} type="button" onClick={() => setPayPlan(p)} className={`press rounded-3xl p-4 text-left card-pop ${p === "annuel" ? "bg-gradient-flame text-primary-foreground" : "bg-gradient-teal text-teal-foreground"}`}>
+              <p className="text-sm font-bold opacity-80">{PLAN_LABEL[p]}</p>
+              <p className="text-xl font-extrabold">{formatMoney(Number(p === "annuel" ? billing?.yearly_price ?? 0 : billing?.monthly_price ?? 0), billing?.currency)}</p>
+              <p className="text-xs font-bold opacity-80">{p === "annuel" ? "par an" : "par mois"}</p>
+            </button>
+          ))}
         </div>
+        <p className="text-xs font-bold text-muted-foreground">Sans abonnement, le bilan du jour peut être exporté à l’unité ({formatMoney(Number(billing?.daily_export_price ?? 0), billing?.currency)}) depuis « Bilan du soir ».</p>
       </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-extrabold">Historique des paiements</h2>
+        {sub.payments.length === 0 && <p className="rounded-3xl bg-card p-4 text-sm font-bold text-muted-foreground soft-shadow">Aucun paiement.</p>}
+        {sub.payments.map((p) => (
+          <div key={p.id} className="flex items-center justify-between gap-2 rounded-3xl bg-card p-4 soft-shadow">
+            <div className="min-w-0">
+              <p className="font-extrabold">{PLAN_LABEL[p.plan]} · {formatMoney(Number(p.amount), p.currency)}</p>
+              <p className="text-xs font-bold text-muted-foreground">{new Date(p.created_at).toLocaleDateString("fr-FR")} · <span className={p.status === "confirme" ? "text-success" : p.status === "refuse" ? "text-destructive" : ""}>{PAY_STATUS[p.status]}</span>{p.admin_note ? ` · ${p.admin_note}` : ""}</p>
+            </div>
+            {p.status === "confirme" && (
+              <button type="button" onClick={() => downloadReceipt(p, businessName, profile?.owner_name, businessPhone)} className="press flex shrink-0 items-center gap-1 rounded-2xl bg-muted px-3 py-2 text-sm font-extrabold">
+                <Receipt className="size-4" /> Reçu
+              </button>
+            )}
+          </div>
+        ))}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-extrabold">Historique des exportations</h2>
+        {exportsLog.length === 0 && <p className="rounded-3xl bg-card p-4 text-sm font-bold text-muted-foreground soft-shadow">Aucune exportation.</p>}
+        {exportsLog.map((e) => (
+          <div key={e.id} className="flex items-center justify-between rounded-2xl bg-card px-4 py-3 text-sm soft-shadow">
+            <span className="font-bold">{e.format} · {e.label}</span>
+            <span className="text-xs font-bold text-muted-foreground">{new Date(e.created_at).toLocaleDateString("fr-FR")}</span>
+          </div>
+        ))}
+      </section>
+
+      <PaymentDialog plan={payPlan} onClose={() => setPayPlan(null)} />
 
       <p className="rounded-3xl bg-gradient-sun p-5 text-sm font-semibold text-sun-foreground">
         Plus vous enregistrez de factures, plus votre dossier est solide pour obtenir un financement.
