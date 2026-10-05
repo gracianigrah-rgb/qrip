@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, Building2, CloudOff } from "lucide-react";
+import { Bell, Building2, CloudOff, Download } from "lucide-react";
+import { dailyUnlocked, useSubscription } from "@/lib/subscription";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import qripLogoAsset from "@/assets/qrip-logo.png.asset.json";
@@ -14,6 +15,11 @@ export function TopBar() {
   const unread = (notifications ?? []).filter((n) => !n.read_at).length;
   useAutoSync(useQueryClient());
   const { online, pending } = useNetworkState();
+  const sub = useSubscription();
+  const level = sub.state === "active" ? "ok" : sub.state === "expiring" || dailyUnlocked(sub.payments) ? "warn" : "off";
+  const exportTone = level === "ok" ? "text-success" : level === "warn" ? "text-warning" : "text-destructive";
+  const exportDot = level === "ok" ? "bg-success" : level === "warn" ? "bg-warning" : "bg-destructive";
+  const exportLabel = level === "ok" ? "Exportations actives" : level === "warn" ? (sub.state === "expiring" ? `Abonnement : ${sub.daysLeft} j restants` : "Export du bilan du jour activé") : "Exportations bloquées";
 
   useEffect(() => {
     getBusinessLogoUrl(profile?.logo_path).then(setLogo).catch(() => setLogo(null));
@@ -30,6 +36,11 @@ export function TopBar() {
         )}
       </div>
       <div className="flex min-w-0 items-center gap-2">
+        <Link to="/rapport" aria-label={exportLabel} title={exportLabel}
+          className="press relative flex size-9 shrink-0 items-center justify-center rounded-full bg-muted active:press-active">
+          <Download className={`size-5 ${exportTone}`} />
+          <span className={`absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-card ${exportDot}`} />
+        </Link>
         <Link
           to="/notifications"
           aria-label="Notifications"
