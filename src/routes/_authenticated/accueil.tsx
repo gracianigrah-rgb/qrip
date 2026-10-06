@@ -55,10 +55,13 @@ export function useInvoices() {
     networkMode: "always",
     queryFn: async () => {
       let rows: any[] = getCachedInvoices() ?? [];
-      if (navigator.onLine) {
+      const { data: s } = await supabase.auth.getSession();
+      const uid = s.session?.user.id;
+      if (navigator.onLine && uid) {
         const { data, error } = await supabase
           .from("invoices")
           .select("*")
+          .eq("user_id", uid)
           .order("invoice_date", { ascending: false })
           .order("created_at", { ascending: false });
         if (!error && data) { rows = data; setCachedInvoices(data); }

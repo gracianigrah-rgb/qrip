@@ -21,9 +21,11 @@ import { Route as AuthenticatedCarnetRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedClasserRouteImport } from './routes/_authenticated/classer'
 import { Route as AuthenticatedFinancementRouteImport } from './routes/_authenticated/financement'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedPartageRouteImport } from './routes/_authenticated/partage'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedRapportRouteImport } from './routes/_authenticated/rapport'
 import { Route as AuthenticatedSaisieRouteImport } from './routes/_authenticated/saisie'
+import { Route as AuthenticatedPartageOwnerIdRouteImport } from './routes/_authenticated/partage.$ownerId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -86,6 +88,11 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPartageRoute = AuthenticatedPartageRouteImport.update({
+  id: '/partage',
+  path: '/partage',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
@@ -101,6 +108,12 @@ const AuthenticatedSaisieRoute = AuthenticatedSaisieRouteImport.update({
   path: '/saisie',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPartageOwnerIdRoute =
+  AuthenticatedPartageOwnerIdRouteImport.update({
+    id: '/$ownerId',
+    path: '/$ownerId',
+    getParentRoute: () => AuthenticatedPartageRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -114,9 +127,11 @@ export interface FileRoutesByFullPath {
   '/classer': typeof AuthenticatedClasserRoute
   '/financement': typeof AuthenticatedFinancementRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/partage': typeof AuthenticatedPartageRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/saisie': typeof AuthenticatedSaisieRoute
+  '/partage/$ownerId': typeof AuthenticatedPartageOwnerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -130,9 +145,11 @@ export interface FileRoutesByTo {
   '/classer': typeof AuthenticatedClasserRoute
   '/financement': typeof AuthenticatedFinancementRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/partage': typeof AuthenticatedPartageRouteWithChildren
   '/profil': typeof AuthenticatedProfilRoute
   '/rapport': typeof AuthenticatedRapportRoute
   '/saisie': typeof AuthenticatedSaisieRoute
+  '/partage/$ownerId': typeof AuthenticatedPartageOwnerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -148,9 +165,11 @@ export interface FileRoutesById {
   '/_authenticated/classer': typeof AuthenticatedClasserRoute
   '/_authenticated/financement': typeof AuthenticatedFinancementRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/partage': typeof AuthenticatedPartageRouteWithChildren
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/rapport': typeof AuthenticatedRapportRoute
   '/_authenticated/saisie': typeof AuthenticatedSaisieRoute
+  '/_authenticated/partage/$ownerId': typeof AuthenticatedPartageOwnerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -166,9 +185,11 @@ export interface FileRouteTypes {
     | '/classer'
     | '/financement'
     | '/notifications'
+    | '/partage'
     | '/profil'
     | '/rapport'
     | '/saisie'
+    | '/partage/$ownerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -182,9 +203,11 @@ export interface FileRouteTypes {
     | '/classer'
     | '/financement'
     | '/notifications'
+    | '/partage'
     | '/profil'
     | '/rapport'
     | '/saisie'
+    | '/partage/$ownerId'
   id:
     | '__root__'
     | '/'
@@ -199,9 +222,11 @@ export interface FileRouteTypes {
     | '/_authenticated/classer'
     | '/_authenticated/financement'
     | '/_authenticated/notifications'
+    | '/_authenticated/partage'
     | '/_authenticated/profil'
     | '/_authenticated/rapport'
     | '/_authenticated/saisie'
+    | '/_authenticated/partage/$ownerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -298,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/partage': {
+      id: '/_authenticated/partage'
+      path: '/partage'
+      fullPath: '/partage'
+      preLoaderRoute: typeof AuthenticatedPartageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profil': {
       id: '/_authenticated/profil'
       path: '/profil'
@@ -319,8 +351,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSaisieRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/partage/$ownerId': {
+      id: '/_authenticated/partage/$ownerId'
+      path: '/$ownerId'
+      fullPath: '/partage/$ownerId'
+      preLoaderRoute: typeof AuthenticatedPartageOwnerIdRouteImport
+      parentRoute: typeof AuthenticatedPartageRoute
+    }
   }
 }
+
+interface AuthenticatedPartageRouteChildren {
+  AuthenticatedPartageOwnerIdRoute: typeof AuthenticatedPartageOwnerIdRoute
+}
+
+const AuthenticatedPartageRouteChildren: AuthenticatedPartageRouteChildren = {
+  AuthenticatedPartageOwnerIdRoute: AuthenticatedPartageOwnerIdRoute,
+}
+
+const AuthenticatedPartageRouteWithChildren =
+  AuthenticatedPartageRoute._addFileChildren(AuthenticatedPartageRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
@@ -330,6 +380,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClasserRoute: typeof AuthenticatedClasserRoute
   AuthenticatedFinancementRoute: typeof AuthenticatedFinancementRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedPartageRoute: typeof AuthenticatedPartageRouteWithChildren
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRapportRoute: typeof AuthenticatedRapportRoute
   AuthenticatedSaisieRoute: typeof AuthenticatedSaisieRoute
@@ -343,6 +394,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClasserRoute: AuthenticatedClasserRoute,
   AuthenticatedFinancementRoute: AuthenticatedFinancementRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedPartageRoute: AuthenticatedPartageRouteWithChildren,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRapportRoute: AuthenticatedRapportRoute,
   AuthenticatedSaisieRoute: AuthenticatedSaisieRoute,
