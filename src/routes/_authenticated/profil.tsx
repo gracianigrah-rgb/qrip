@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, Camera, Flag, LogOut, MapPin, Phone, ShieldCheck, User, WalletCards } from "lucide-react";
+import { Building2, Camera, Flag, LogOut, MapPin, Phone, ShieldCheck, User, Users, WalletCards } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useIsAdmin } from "@/lib/admin";
 import { useEffect, useRef, useState } from "react";
@@ -256,6 +256,10 @@ function Profil() {
           {saving ? "Enregistrement…" : "Enregistrer mon profil"}
         </BigButton>
       </section>
+
+      <Link to="/partage" className="press flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-teal text-base font-extrabold text-teal-foreground card-pop active:press-active">
+        <Users className="size-5" /> Partage de trésorerie
+      </Link>
 
       {isAdmin && (
         <Link to="/admin" className="press flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-sun text-base font-extrabold text-sun-foreground card-pop active:press-active">
