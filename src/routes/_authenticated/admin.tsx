@@ -373,7 +373,7 @@ function BillingTab() {
     const prices = [n(f!.monthly_price), n(f!.yearly_price), n(f!.daily_export_price)];
     if (prices.some((v) => !Number.isFinite(v) || v < 0)) { toast.error("Tarif invalide."); return; }
     const { error } = await supabase.from("billing_settings").update({
-      monthly_price: prices[0], yearly_price: prices[1], daily_export_price: prices[2], currency: f!.currency,
+      monthly_price: prices[0]!, yearly_price: prices[1]!, daily_export_price: prices[2]!, currency: f!.currency,
       payment_number: f!.payment_number?.trim() || null, payment_link: f!.payment_link?.trim() || null, instructions: f!.instructions?.trim() || null,
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
@@ -432,7 +432,7 @@ function PaymentsTab() {
   }
   async function submitReview() {
     if (!review) return;
-    const { error } = await supabase.rpc("review_payment", { _id: review.p.id, _approve: review.approve, _note: review.note.trim() || undefined });
+    const { error } = await supabase.rpc("review_payment", { _id: review.p.id, _approve: review.approve, _note: review.note.trim() });
     if (error) { toast.error("Action impossible."); return; }
     toast.success(review.approve ? "Paiement confirmé, reçu envoyé." : "Paiement refusé.");
     setReview(null);
