@@ -64,6 +64,13 @@
       "when": 1791165632100,
       "tag": "0008_daily_export_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791257802476,
+      "tag": "0009_treasury_shares",
+      "breakpoints": true
     }
   ]
 }

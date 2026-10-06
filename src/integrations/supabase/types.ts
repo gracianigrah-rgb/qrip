@@ -299,6 +299,36 @@ export type Database = {
         }
         Relationships: []
       }
+      treasury_shares: {
+        Row: {
+          accepted_at: string | null
+          code: string
+          created_at: string
+          id: string
+          label: string | null
+          owner_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          owner_id?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          owner_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -322,6 +352,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_treasury: { Args: { _owner: string }; Returns: boolean }
       claim_admin: { Args: never; Returns: boolean }
       has_role: {
         Args: {
@@ -330,6 +361,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      redeem_share_code: { Args: { _code: string }; Returns: string }
       review_payment: {
         Args: { _approve: boolean; _id: string; _note?: string }
         Returns: undefined
