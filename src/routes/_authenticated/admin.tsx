@@ -458,7 +458,7 @@ function PaymentsTab() {
                 <p className="truncate font-extrabold">{u?.business_name || u?.phone || "Utilisateur"}</p>
                 <p className="truncate text-xs font-bold text-muted-foreground">{u?.owner_name ?? ""} · {u?.phone ?? ""}</p>
               </div>
-              <span className={`rounded-full px-2 py-1 text-xs font-extrabold ${p.status === "confirme" ? "bg-success text-success-foreground" : p.status === "refuse" ? "bg-destructive text-destructive-foreground" : "bg-warning text-warning-foreground"}`}>{PAY_STATUS[p.status]}</span>
+              <span className={`rounded-full px-2 py-1 text-xs font-extrabold ${p.status === "confirme" ? "bg-success text-primary-foreground" : p.status === "refuse" ? "bg-destructive text-destructive-foreground" : "bg-warning text-primary-foreground"}`}>{PAY_STATUS[p.status]}</span>
             </div>
             <p className="text-sm font-bold">{PLAN_LABEL[p.plan] ?? p.plan} · {formatMoney(Number(p.amount), p.currency)}</p>
             <p className="text-xs font-bold text-muted-foreground">Envoyé le {new Date(p.created_at).toLocaleString("fr-FR")}{p.payer_ref ? ` · Réf. ${p.payer_ref}` : ""}{p.receipt_no ? ` · ${p.receipt_no}` : ""}</p>
