@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Pencil, Send, Trash2 } from "lucide-react";
+import { Check, ExternalLink, Pencil, Send, Trash2, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PAY_STATUS, PLAN_LABEL, type Billing, type Payment } from "@/lib/subscription";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BigButton, Screen } from "@/components/qrip/Screen";
@@ -25,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type Tab = "users" | "ops" | "loans" | "notif";
+type Tab = "users" | "ops" | "loans" | "pay" | "tarifs" | "notif";
 const input = "w-full rounded-2xl bg-muted px-4 py-3 font-bold outline-none";
 
 function AdminPage() {
@@ -43,14 +45,16 @@ function AdminPage() {
 
   return (
     <Screen title="Administration" back="/profil" className="space-y-4">
-      <div className="grid grid-cols-4 gap-1 rounded-3xl bg-card p-1.5 soft-shadow">
-        {([["users", "Utilisateurs"], ["ops", "Opérations"], ["loans", "Crédits"], ["notif", "Notifier"]] as const).map(([k, l]) => (
+      <div className="grid grid-cols-3 gap-1 rounded-3xl bg-card p-1.5 soft-shadow">
+        {([["users", "Utilisateurs"], ["ops", "Opérations"], ["loans", "Crédits"], ["pay", "Paiements"], ["tarifs", "Tarifs"], ["notif", "Notifier"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`rounded-2xl py-2.5 text-xs font-extrabold ${tab === k ? "bg-gradient-sun text-sun-foreground" : "text-muted-foreground"}`}>{l}</button>
         ))}
       </div>
       {tab === "users" && <UsersTab />}
       {tab === "ops" && <OpsTab />}
       {tab === "loans" && <LoansTab />}
+      {tab === "pay" && <PaymentsTab />}
+      {tab === "tarifs" && <BillingTab />}
       {tab === "notif" && <NotifyTab />}
     </Screen>
   );
@@ -148,13 +152,17 @@ function OpsTab() {
   const names = new Map((profiles ?? []).map((p) => [p.id, p.business_name || p.phone]));
   const list = (data ?? []).filter((i) => kind === "all" || i.kind === kind);
 
-  async function editAmount(i: AdminInvoice) {
-    const v = prompt("Nouveau montant", String(i.amount));
-    if (v === null) return;
-    const amount = Number(v.replace(/\s/g, ""));
+  const [editing, setEditing] = useState<AdminInvoice | null>(null);
+  const [amountStr, setAmountStr] = useState("");
+  function editAmount(i: AdminInvoice) { setEditing(i); setAmountStr(String(i.amount)); }
+  async function saveAmount() {
+    if (!editing) return;
+    const amount = Number(amountStr.replace(/\s/g, ""));
     if (!Number.isFinite(amount) || amount < 0) { toast.error("Montant invalide."); return; }
-    const { error } = await supabase.from("invoices").update({ amount }).eq("id", i.id);
+    const { error } = await supabase.from("invoices").update({ amount }).eq("id", editing.id);
     if (error) { toast.error("Modification impossible."); return; }
+    toast.success("Montant modifié.");
+    setEditing(null);
     qc.invalidateQueries({ queryKey: ["admin-invoices"] });
   }
   async function remove(i: AdminInvoice) {
@@ -171,6 +179,9 @@ function OpsTab() {
         <option value="vente">Ventes</option>
         <option value="achat">Achats</option>
       </select>
+      <AppDialog open={!!editing} onClose={() => setEditing(null)} title="Modifier le montant" desc={editing ? `${editing.kind === "vente" ? "Vente" : "Achat"} · ${names.get(editing.user_id) ?? ""}` : ""} onSave={saveAmount}>
+        <input className={input} inputMode="numeric" autoFocus value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
+      </AppDialog>
       <p className="text-sm font-bold text-muted-foreground">{list.length} opération(s)</p>
       {list.map((i) => (
         <div key={i.id} className="flex items-center justify-between gap-2 rounded-3xl bg-card p-4 soft-shadow">
@@ -261,15 +272,15 @@ function LoansTab() {
     if (error) { toast.error("Modification impossible."); return; }
     qc.invalidateQueries({ queryKey: ["admin-loans"] });
   }
-  function editDetails(l: AdminLoan) {
-    const partner = prompt("Partenaire microfinance", l.partner ?? "");
-    if (partner === null) return;
-    const c = prompt("Commission (montant)", String(l.commission));
-    if (c === null) return;
-    const commission = Number(c.replace(/\s/g, ""));
+  const [edit, setEdit] = useState<{ l: AdminLoan; partner: string; commission: string; note: string } | null>(null);
+  function editDetails(l: AdminLoan) { setEdit({ l, partner: l.partner ?? "", commission: String(l.commission), note: l.admin_note ?? "" }); }
+  async function saveDetails() {
+    if (!edit) return;
+    const commission = Number(edit.commission.replace(/\s/g, ""));
     if (!Number.isFinite(commission) || commission < 0) { toast.error("Commission invalide."); return; }
-    const note = prompt("Note interne", l.admin_note ?? "");
-    update(l, { partner: partner.trim() || null, commission, admin_note: note?.trim() || null });
+    await update(edit.l, { partner: edit.partner.trim() || null, commission, admin_note: edit.note.trim() || null });
+    toast.success("Dossier mis à jour.");
+    setEdit(null);
   }
   async function remove(l: AdminLoan) {
     if (!confirm("Supprimer cette demande ?")) return;
@@ -284,6 +295,16 @@ function LoansTab() {
         <div className="rounded-3xl bg-card p-4 soft-shadow"><p className="text-xs font-bold text-muted-foreground">Décaissé</p><p className="font-extrabold">{formatMoney(disbursed)}</p></div>
         <div className="rounded-3xl bg-card p-4 soft-shadow"><p className="text-xs font-bold text-muted-foreground">Commissions</p><p className="font-extrabold text-teal-deep">{formatMoney(totalCommission)}</p></div>
       </div>
+      <AppDialog open={!!edit} onClose={() => setEdit(null)} title="Dossier de crédit" desc={edit ? `${formatMoney(Number(edit.l.amount))} · ${edit.l.purpose}` : ""} onSave={saveDetails}>
+        {edit && (<>
+          <label className="block text-sm font-extrabold">Partenaire microfinance</label>
+          <input className={input} placeholder="Ex. Cofina, Advans…" value={edit.partner} onChange={(e) => setEdit({ ...edit, partner: e.target.value })} />
+          <label className="block text-sm font-extrabold">Commission (montant)</label>
+          <input className={input} inputMode="numeric" value={edit.commission} onChange={(e) => setEdit({ ...edit, commission: e.target.value })} />
+          <label className="block text-sm font-extrabold">Note interne</label>
+          <textarea className={`${input} min-h-20`} value={edit.note} onChange={(e) => setEdit({ ...edit, note: e.target.value })} />
+        </>)}
+      </AppDialog>
       {list.length === 0 && <p className="rounded-3xl bg-card p-5 font-bold soft-shadow">Aucune demande pour le moment.</p>}
       {list.map((l) => {
         const p = byId.get(l.user_id);
@@ -311,6 +332,161 @@ function LoansTab() {
           </div>
         );
       })}
+    </section>
+  );
+}
+
+function AppDialog({ open, onClose, title, desc, onSave, saveLabel = "Enregistrer", children }: { open: boolean; onClose: () => void; title: string; desc?: string; onSave: () => void; saveLabel?: string; children: React.ReactNode }) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-sm rounded-4xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-extrabold">{title}</DialogTitle>
+          {desc ? <DialogDescription className="font-semibold">{desc}</DialogDescription> : <DialogDescription className="sr-only">{title}</DialogDescription>}
+        </DialogHeader>
+        <div className="space-y-2">{children}</div>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={onClose} className="press rounded-2xl bg-muted py-3 font-extrabold">Annuler</button>
+          <button type="button" onClick={onSave} className="press rounded-2xl bg-gradient-flame py-3 font-extrabold text-primary-foreground">{saveLabel}</button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function BillingTab() {
+  const qc = useQueryClient();
+  const [form, setForm] = useState<Billing | null>(null);
+  const { data } = useQuery({
+    queryKey: ["billing"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("billing_settings").select("*").eq("id", 1).maybeSingle();
+      if (error) throw error;
+      return data as Billing | null;
+    },
+  });
+  const f = form ?? data;
+  if (!f) return <p className="rounded-3xl bg-card p-5 font-bold soft-shadow">Chargement…</p>;
+  const set = (k: keyof Billing, v: string) => setForm({ ...f, [k]: v } as Billing);
+  async function save() {
+    const n = (v: unknown) => Number(String(v).replace(/\s/g, ""));
+    const prices = [n(f!.monthly_price), n(f!.yearly_price), n(f!.daily_export_price)];
+    if (prices.some((v) => !Number.isFinite(v) || v < 0)) { toast.error("Tarif invalide."); return; }
+    const { error } = await supabase.from("billing_settings").update({
+      monthly_price: prices[0], yearly_price: prices[1], daily_export_price: prices[2], currency: f!.currency,
+      payment_number: f!.payment_number?.trim() || null, payment_link: f!.payment_link?.trim() || null, instructions: f!.instructions?.trim() || null,
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+    if (error) { toast.error("Enregistrement impossible."); return; }
+    toast.success("Tarifs enregistrés.");
+    setForm(null);
+    qc.invalidateQueries({ queryKey: ["billing"] });
+  }
+  const L = ({ t }: { t: string }) => <label className="block pt-1 text-sm font-extrabold">{t}</label>;
+  return (
+    <section className="space-y-2 rounded-3xl bg-card p-5 soft-shadow">
+      <h2 className="text-lg font-extrabold">Tarifs</h2>
+      <L t="Abonnement mensuel" /><input className={input} inputMode="numeric" value={String(f.monthly_price ?? "")} onChange={(e) => set("monthly_price", e.target.value)} />
+      <L t="Abonnement annuel" /><input className={input} inputMode="numeric" value={String(f.yearly_price ?? "")} onChange={(e) => set("yearly_price", e.target.value)} />
+      <L t="Export ponctuel du bilan du jour" /><input className={input} inputMode="numeric" value={String(f.daily_export_price ?? "")} onChange={(e) => set("daily_export_price", e.target.value)} />
+      <L t="Devise" />
+      <select className={input} value={f.currency} onChange={(e) => set("currency", e.target.value)}>
+        <option value="XOF">F CFA (XOF)</option><option value="EUR">Euro</option><option value="USD">Dollar</option>
+      </select>
+      <h2 className="pt-3 text-lg font-extrabold">Coordonnées de paiement</h2>
+      <L t="Numéro Mobile Money" /><input className={input} placeholder="Ex. +225 07 00 00 00 00" value={f.payment_number ?? ""} onChange={(e) => set("payment_number", e.target.value)} />
+      <L t="Lien de paiement" /><input className={input} placeholder="https://pay.wave.com/…" value={f.payment_link ?? ""} onChange={(e) => set("payment_link", e.target.value)} />
+      <L t="Instructions" /><textarea className={`${input} min-h-20`} placeholder="Ex. Wave ou Orange Money, au nom de…" value={f.instructions ?? ""} onChange={(e) => set("instructions", e.target.value)} />
+      <div className="pt-2"><BigButton tone="flame" onClick={save}>Enregistrer</BigButton></div>
+    </section>
+  );
+}
+
+function PaymentsTab() {
+  const qc = useQueryClient();
+  const [status, setStatus] = useState<"en_attente" | "confirme" | "refuse" | "all">("en_attente");
+  const [review, setReview] = useState<{ p: Payment; approve: boolean; note: string } | null>(null);
+  const [proof, setProof] = useState<{ url: string; pdf: boolean } | null>(null);
+  const { data } = useQuery({
+    queryKey: ["admin-payments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("subscription_payments").select("*").order("created_at", { ascending: false }).limit(300);
+      if (error) throw error;
+      return data as Payment[];
+    },
+  });
+  const { data: profiles } = useQuery({
+    queryKey: ["admin-profiles"],
+    queryFn: async () => (await supabase.from("profiles").select("id, phone, business_name, owner_name, city, country, currency, created_at")).data as AdminProfile[],
+  });
+  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const all = data ?? [];
+  const list = all.filter((p) => status === "all" || p.status === status);
+  const revenue = all.filter((p) => p.status === "confirme").reduce((s, p) => s + Number(p.amount), 0);
+
+  async function openProof(p: Payment) {
+    if (!p.proof_path) { toast.error("Aucune preuve jointe."); return; }
+    const { data, error } = await supabase.storage.from("preuves-paiement").createSignedUrl(p.proof_path, 600);
+    if (error || !data) { toast.error("Preuve introuvable."); return; }
+    setProof({ url: data.signedUrl, pdf: p.proof_path.toLowerCase().endsWith(".pdf") });
+  }
+  async function submitReview() {
+    if (!review) return;
+    const { error } = await supabase.rpc("review_payment", { _id: review.p.id, _approve: review.approve, _note: review.note.trim() || undefined });
+    if (error) { toast.error("Action impossible."); return; }
+    toast.success(review.approve ? "Paiement confirmé, reçu envoyé." : "Paiement refusé.");
+    setReview(null);
+    qc.invalidateQueries({ queryKey: ["admin-payments"] });
+  }
+
+  return (
+    <section className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-3xl bg-card p-4 soft-shadow"><p className="text-xs font-bold text-muted-foreground">À vérifier</p><p className="font-extrabold text-primary">{all.filter((p) => p.status === "en_attente").length}</p></div>
+        <div className="rounded-3xl bg-card p-4 soft-shadow"><p className="text-xs font-bold text-muted-foreground">Encaissé</p><p className="font-extrabold text-teal-deep">{formatMoney(revenue)}</p></div>
+      </div>
+      <select className={input} value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+        <option value="en_attente">En vérification</option><option value="confirme">Confirmés</option><option value="refuse">Refusés</option><option value="all">Toutes les transactions</option>
+      </select>
+      {list.length === 0 && <p className="rounded-3xl bg-card p-5 font-bold soft-shadow">Aucune transaction.</p>}
+      {list.map((p) => {
+        const u = byId.get(p.user_id);
+        return (
+          <div key={p.id} className="space-y-2 rounded-3xl bg-card p-4 soft-shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate font-extrabold">{u?.business_name || u?.phone || "Utilisateur"}</p>
+                <p className="truncate text-xs font-bold text-muted-foreground">{u?.owner_name ?? ""} · {u?.phone ?? ""}</p>
+              </div>
+              <span className={`rounded-full px-2 py-1 text-xs font-extrabold ${p.status === "confirme" ? "bg-success text-success-foreground" : p.status === "refuse" ? "bg-destructive text-destructive-foreground" : "bg-warning text-warning-foreground"}`}>{PAY_STATUS[p.status]}</span>
+            </div>
+            <p className="text-sm font-bold">{PLAN_LABEL[p.plan] ?? p.plan} · {formatMoney(Number(p.amount), p.currency)}</p>
+            <p className="text-xs font-bold text-muted-foreground">Envoyé le {new Date(p.created_at).toLocaleString("fr-FR")}{p.payer_ref ? ` · Réf. ${p.payer_ref}` : ""}{p.receipt_no ? ` · ${p.receipt_no}` : ""}</p>
+            {p.admin_note && <p className="text-xs font-bold">Note : {p.admin_note}</p>}
+            <div className="flex gap-2">
+              <button type="button" onClick={() => openProof(p)} className="press flex flex-1 items-center justify-center gap-1 rounded-2xl bg-muted py-2 text-sm font-extrabold"><ExternalLink className="size-4" /> Preuve</button>
+              {p.status === "en_attente" && (<>
+                <button type="button" onClick={() => setReview({ p, approve: true, note: "" })} className="press flex flex-1 items-center justify-center gap-1 rounded-2xl bg-gradient-teal py-2 text-sm font-extrabold text-teal-foreground"><Check className="size-4" /> Confirmer</button>
+                <button type="button" onClick={() => setReview({ p, approve: false, note: "" })} className="press flex items-center justify-center rounded-2xl bg-destructive px-3 py-2 text-destructive-foreground" aria-label="Refuser"><X className="size-4" /></button>
+              </>)}
+            </div>
+          </div>
+        );
+      })}
+      <AppDialog open={!!review} onClose={() => setReview(null)} title={review?.approve ? "Confirmer le paiement" : "Refuser le paiement"}
+        desc={review ? `${PLAN_LABEL[review.p.plan] ?? ""} · ${formatMoney(Number(review.p.amount), review.p.currency)}` : ""} onSave={submitReview} saveLabel={review?.approve ? "Confirmer" : "Refuser"}>
+        <p className="text-sm font-bold text-muted-foreground">{review?.approve ? "Les exportations seront débloquées et un reçu sera créé automatiquement." : "L'utilisateur sera prévenu par notification."}</p>
+        <textarea className={`${input} min-h-20`} placeholder={review?.approve ? "Note (facultatif)" : "Motif du refus"} value={review?.note ?? ""} onChange={(e) => review && setReview({ ...review, note: e.target.value })} />
+      </AppDialog>
+      <Dialog open={!!proof} onOpenChange={(v) => !v && setProof(null)}>
+        <DialogContent className="max-w-md rounded-4xl">
+          <DialogHeader><DialogTitle className="text-xl font-extrabold">Preuve de paiement</DialogTitle><DialogDescription className="sr-only">Capture envoyée</DialogDescription></DialogHeader>
+          {proof && (proof.pdf
+            ? <iframe src={proof.url} title="Preuve" className="h-[60vh] w-full rounded-2xl" />
+            : <img src={proof.url} alt="Preuve de paiement" className="max-h-[60vh] w-full rounded-2xl object-contain" />)}
+          {proof && <a href={proof.url} target="_blank" rel="noreferrer" className="press block rounded-2xl bg-muted py-3 text-center font-extrabold">Ouvrir en grand</a>}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
