@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { FileDown, MessageCircle, Moon } from "lucide-react";
+import { FileDown, Lock, MessageCircle, Moon } from "lucide-react";
+import { PaymentDialog } from "@/components/qrip/PaymentDialog";
+import { canExport, dailyUnlocked, logExport, useBilling, useSubscription } from "@/lib/subscription";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/qrip";
 import { isOpenCredit, whatsappUrl } from "@/lib/credit";
@@ -35,6 +37,11 @@ export function DailySummary({ invoices, business, currency, open, onOpenChange 
   const net = sum(ventes) - depenses;
   const m = (v: number) => formatMoney(v, currency);
   const goal = useDailyGoal();
+  const sub = useSubscription();
+  const { data: billing } = useBilling();
+  const [payOpen, setPayOpen] = useState(false);
+  const unlocked = canExport(sub.state) || dailyUnlocked(sub.payments);
+  const pendingDaily = sub.payments.some((p) => p.plan === "bilan_jour" && p.status === "en_attente" && p.export_date === today);
   const pct = goal ? Math.min(100, Math.round((sum(ventes) / goal) * 100)) : 0;
   const dateLabel = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
@@ -51,6 +58,7 @@ export function DailySummary({ invoices, business, currency, open, onOpenChange 
   }
 
   async function pdf() {
+    if (!unlocked) { setPayOpen(true); return; }
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     doc.setFontSize(20);
@@ -74,6 +82,7 @@ export function DailySummary({ invoices, business, currency, open, onOpenChange 
       y += 7;
     });
     doc.save(`bilan-${today}.pdf`);
+    void logExport("PDF", `Bilan du soir ${today}`);
   }
 
   return (
@@ -106,9 +115,15 @@ export function DailySummary({ invoices, business, currency, open, onOpenChange 
           <div className="rounded-2xl bg-muted p-3"><p className="font-bold text-muted-foreground">À crédit</p><p className="text-lg font-extrabold">{m(credit)}</p></div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <button type="button" onClick={pdf} className="press flex items-center justify-center gap-2 rounded-2xl bg-gradient-flame py-3 font-extrabold text-primary-foreground"><FileDown className="size-5" /> PDF</button>
+          <button type="button" onClick={pdf} className="press flex items-center justify-center gap-2 rounded-2xl bg-gradient-flame py-3 font-extrabold text-primary-foreground">{unlocked ? <><FileDown className="size-5" /> PDF</> : <><Lock className="size-5" /> PDF</>}</button>
           <a href={whatsappUrl(text())} target="_blank" rel="noreferrer" className="press flex items-center justify-center gap-2 rounded-2xl bg-gradient-teal py-3 font-extrabold text-teal-foreground"><MessageCircle className="size-5" /> WhatsApp</a>
         </div>
+        {!unlocked && (
+          <p className="rounded-2xl bg-muted p-3 text-center text-xs font-bold text-muted-foreground">
+            {pendingDaily ? "Paiement du bilan en vérification. Le PDF sera débloqué après confirmation." : <>PDF réservé aux abonnés. <button type="button" onClick={() => setPayOpen(true)} className="font-extrabold text-primary underline">Payer l'export du jour ({formatMoney(Number(billing?.daily_export_price ?? 0), billing?.currency)})</button></>}
+          </p>
+        )}
+        {payOpen && <PaymentDialog plan="bilan_jour" onClose={() => setPayOpen(false)} />}
       </DialogContent>
     </Dialog>
   );
